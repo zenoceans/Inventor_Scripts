@@ -1,0 +1,25 @@
+[project]
+name = "inventor-export-tool"
+version = "0.1.0"
+description = "Batch export STEP/DWG/PDF from Autodesk Inventor assemblies"
+requires-python = ">=3.10"
+dependencies = [
+    "pywin32>=306",
+]
+
+[project.gui-scripts]
+inventor-export-tool = "inventor_export_tool.app:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.0",
+    "pyinstaller>=6.0",
+    "ruff>=0.8",
+]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 99
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

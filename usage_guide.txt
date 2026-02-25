@@ -1,0 +1,74 @@
+========================================
+  Inventor Batch Export Tool - Usage Guide
+========================================
+
+REQUIREMENTS
+- Windows 10 or 11
+- Autodesk Inventor 2026 (must be running before you start the tool)
+
+GETTING STARTED
+1. Unzip the folder to any location on your computer (e.g. Desktop or Documents).
+2. Open the folder and double-click "InventorExportTool.exe" to start.
+3. If Windows SmartScreen warns you, click "More info" then "Run anyway".
+   The tool is safe -- it only talks to Inventor on your computer.
+
+HOW TO USE
+1. Open your assembly in Inventor first.
+2. Launch InventorExportTool.exe.
+3. Choose an output folder where exported files will be saved.
+4. Select which formats to export:
+   - STEP (.step) -- 3D model file for other CAD programs
+   - DWG (.dwg) -- 2D drawing file (requires matching .idw drawing files)
+   - PDF (.pdf) -- printable drawing (requires matching .idw drawing files)
+5. Select which components to include:
+   - Parts (IPT) -- individual parts
+   - Sub-assemblies (IAM) -- nested assemblies
+   - Top-level assembly -- the main assembly itself
+   - Suppressed components -- parts that are hidden/suppressed in the assembly
+6. Click "Scan Assembly" to preview what will be exported.
+7. Review the log area -- it shows every file that will be created.
+8. Click "Run Export" to start exporting.
+9. Wait for the progress bar to finish. Each file shows OK or FAILED in the log.
+
+EXPORT SETTINGS (ADVANCED)
+Click the "Settings..." button to configure advanced options for each format:
+- STEP tab: Choose AP 203 or AP 214 protocol, set author/organization info
+- PDF tab: Set resolution (DPI), color options, which sheets to export
+- DWG tab: Point to a custom .ini settings file from Inventor
+
+Your settings are saved automatically and remembered next time you open the tool.
+
+VIEWING THE LOG
+After an export finishes, click the "Open Log" button. This opens the log file
+in Notepad so you can review results, see any errors, and save or print it.
+
+Log files are saved in your output folder as "export_log_YYYYMMDD_HHMMSS.txt".
+
+CONFIGURATION FILE
+The tool creates a "config.json" file next to the .exe. This stores your
+settings between sessions. You do NOT need to edit this file -- use the
+checkboxes and Settings dialog in the tool instead.
+
+If something goes wrong, you can delete config.json and the tool will
+reset to default settings on next launch.
+
+DWG/PDF EXPORT NOTES
+- DWG and PDF export require an .idw drawing file with the same name as
+  the part or assembly, in the same folder.
+  Example: If you have "Bracket.ipt", there must be a "Bracket.idw" nearby.
+- If no .idw file is found, that component is skipped for DWG/PDF export.
+
+TROUBLESHOOTING
+- "Cannot connect to Inventor" -- Make sure Inventor is running and an
+  assembly is open before you launch the tool.
+- Export fails for a file -- Check that the file is not open in another
+  program and not checked out by someone else in Vault.
+- Tool does not start -- Make sure you extracted ALL files from the zip.
+  Do not move just the .exe out of the folder.
+- Windows blocks the program -- Right-click the .exe, choose Properties,
+  and check "Unblock" at the bottom, then click OK.
+
+UPDATES
+When you receive a new version, simply replace the entire folder with
+the new one. Your config.json can be copied over if you want to keep
+your settings.
