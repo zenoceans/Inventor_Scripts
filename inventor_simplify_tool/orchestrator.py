@@ -80,8 +80,28 @@ class SimplifyOrchestrator:
 
             if result.success:
                 self._emit(f"  OK ({result.duration_seconds:.1f}s) -> {result.output_path}")
+                _log.info(
+                    "simplify_item",
+                    extra={
+                        "data": {
+                            "file": row.step_path,
+                            "success": True,
+                            "duration": round(result.duration_seconds, 2),
+                        }
+                    },
+                )
             else:
                 self._emit(f"  FAILED: {result.error_message}")
+                _log.info(
+                    "simplify_item",
+                    extra={
+                        "data": {
+                            "file": row.step_path,
+                            "success": False,
+                            "error": result.error_message,
+                        }
+                    },
+                )
 
             if logger:
                 try:
@@ -101,6 +121,17 @@ class SimplifyOrchestrator:
         )
 
         self._emit(f"Done: {succeeded} succeeded, {failed} failed.")
+        total_time = sum(r.duration_seconds for r in results)
+        _log.info(
+            "simplify_batch",
+            extra={
+                "data": {
+                    "succeeded": succeeded,
+                    "failed": failed,
+                    "total_time": round(total_time, 2),
+                }
+            },
+        )
         self._close_logger(logger, summary)
         return summary
 

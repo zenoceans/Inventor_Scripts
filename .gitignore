@@ -13,3 +13,5 @@ build/
 test_exports/
 test_imports/
 config.json
+telemetry_config.json
+logs/

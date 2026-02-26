@@ -32,6 +32,12 @@ def build() -> None:
             "win32com.client",
             "--hidden-import",
             "win32api",
+            "--hidden-import",
+            "win32gui",
+            "--hidden-import",
+            "win32ui",
+            "--hidden-import",
+            "win32con",
             # Exclude unused modules to reduce size
             "--exclude-module",
             "numpy",

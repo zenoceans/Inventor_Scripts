@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import sys
 import tkinter as tk
 from pathlib import Path
@@ -15,8 +16,19 @@ from zabra_cadabra.theme import HEADER_BG, HEADER_FG, apply_bw_theme
 class ZabraApp:
     """Top-level application shell."""
 
-    def __init__(self, configs: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        configs: dict[str, Any],
+        session: Any = None,
+        telemetry_config: Any = None,
+        log_file: Any = None,
+        transport: Any = None,
+    ) -> None:
         self._configs = configs
+        self._session = session
+        self._telemetry_config = telemetry_config
+        self._log_file = log_file
+        self._transport = transport
         self._tabs: list[ttk.Frame] = []
 
         self._root = tk.Tk()
@@ -36,6 +48,15 @@ class ZabraApp:
 
         self._build_header()
         self._build_notebook()
+
+        # Telemetry hooks
+        if self._telemetry_config and self._telemetry_config.auto_popup_on_error:
+            from zabra_cadabra.telemetry.error_hook import install_error_hooks
+
+            install_error_hooks(self._root, self._on_feedback)
+
+        if self._session:
+            self._notebook.bind("<<NotebookTabChanged>>", self._on_tab_changed)
 
     def _resolve_asset(self, filename: str) -> str | None:
         if getattr(sys, "frozen", False):
@@ -76,6 +97,20 @@ class ZabraApp:
             font=("Segoe UI", 18, "bold"),
         ).pack(side="left", pady=8)
 
+        # Feedback button (right side)
+        tk.Button(
+            header,
+            text="Feedback",
+            bg=HEADER_BG,
+            fg=HEADER_FG,
+            font=("Segoe UI", 9),
+            bd=0,
+            activebackground=HEADER_BG,
+            activeforeground="#cccccc",
+            cursor="hand2",
+            command=self._on_feedback,
+        ).pack(side="right", padx=(0, 16), pady=8)
+
     def _build_notebook(self) -> None:
         self._notebook = ttk.Notebook(self._root)
         self._notebook.pack(fill="both", expand=True, padx=4, pady=(0, 4))
@@ -85,6 +120,27 @@ class ZabraApp:
             tab = spec.factory(self._notebook, config)
             self._notebook.add(tab, text=spec.title)
             self._tabs.append(tab)
+
+    def _on_feedback(self, error_context: dict[str, Any] | None = None) -> None:
+        if self._session is None:
+            return
+        from zabra_cadabra.telemetry.feedback import FeedbackDialog
+
+        FeedbackDialog(
+            self._root,
+            session=self._session,
+            log_file=self._log_file,
+            transport=self._transport,
+            error_context=error_context,
+        )
+
+    def _on_tab_changed(self, _event: object = None) -> None:
+        try:
+            tab_idx = self._notebook.index(self._notebook.select())
+            tab_name = self._notebook.tab(tab_idx, "text")
+            logging.getLogger("zabra.shell").info("tab_switch", extra={"data": {"tab": tab_name}})
+        except Exception:
+            pass
 
     def run(self) -> None:
         """Start the application main loop."""

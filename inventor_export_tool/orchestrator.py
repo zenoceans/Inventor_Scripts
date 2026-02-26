@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import time
 from pathlib import Path
@@ -22,6 +23,8 @@ from inventor_export_tool.naming import (
     find_idw_path,
     resolve_duplicates,
 )
+
+_tel = logging.getLogger("zabra.export")
 
 
 def _to_component_info(comp: DiscoveredComponent) -> ComponentInfo:
@@ -131,6 +134,7 @@ class ExportOrchestrator:
         self._last_log_path: Path | None = None
 
     def _emit(self, msg: str) -> None:
+        _tel.info(msg)
         self._log(msg)
 
     def scan(self) -> ScanSummary:
@@ -190,6 +194,16 @@ class ExportOrchestrator:
         )
 
         self._emit(f"Export plan: {len(items)} files to export")
+        _tel.info(
+            "scan_finish",
+            extra={
+                "data": {
+                    "components": all_count,
+                    "export_items": len(items),
+                    "content_center_excluded": content_center_count,
+                }
+            },
+        )
         for item in items:
             idw_note = ""
             if item.export_type in ("dwg", "pdf"):
@@ -249,6 +263,17 @@ class ExportOrchestrator:
                 duration = time.monotonic() - start_time
                 result = ExportResult(item=item, success=True, duration_seconds=duration)
                 self._emit(f"  OK ({duration:.1f}s)")
+                _tel.info(
+                    "export_item",
+                    extra={
+                        "data": {
+                            "file": item.output_filename,
+                            "format": item.export_type,
+                            "success": True,
+                            "duration": round(duration, 2),
+                        }
+                    },
+                )
             except Exception as e:
                 duration = time.monotonic() - start_time
                 result = ExportResult(
@@ -258,6 +283,18 @@ class ExportOrchestrator:
                     duration_seconds=duration,
                 )
                 self._emit(f"  FAILED: {e}")
+                _tel.info(
+                    "export_item",
+                    extra={
+                        "data": {
+                            "file": item.output_filename,
+                            "format": item.export_type,
+                            "success": False,
+                            "duration": round(duration, 2),
+                            "error": str(e),
+                        }
+                    },
+                )
 
             results.append(result)
             if logger:
@@ -273,6 +310,17 @@ class ExportOrchestrator:
         succeeded = sum(1 for r in results if r.success)
         failed = sum(1 for r in results if not r.success)
         self._emit(f"Export complete: {succeeded} succeeded, {failed} failed")
+        total_time = sum(r.duration_seconds for r in results)
+        _tel.info(
+            "export_batch",
+            extra={
+                "data": {
+                    "succeeded": succeeded,
+                    "failed": failed,
+                    "total_time": round(total_time, 2),
+                }
+            },
+        )
 
         if logger:
             try:
