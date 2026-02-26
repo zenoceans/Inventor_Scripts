@@ -33,3 +33,50 @@ class PropertySet(str, Enum):
     DOCUMENT_SUMMARY = "Inventor Document Summary Information"
     DESIGN_TRACKING = "Design Tracking Properties"
     USER_DEFINED = "Inventor User Defined Properties"
+
+
+class SimplifyEnvelopeStyle(IntEnum):
+    """How to replace geometry with envelopes.
+
+    Values are provisional — actual COM enum values may differ.
+    Use SimplifySettings.raw_options to override if needed.
+    """
+
+    NONE = 0
+    WHOLE_PART = 1
+    EACH_BODY = 2
+    SELECTED_BODIES = 3
+
+
+class SimplifyBoundingType(IntEnum):
+    """Bounding geometry type for envelopes.
+
+    Values are provisional — actual COM enum values may differ.
+    """
+
+    ORTHOGONAL = 0
+    ORIENTED_MIN_BB = 1
+    ORIENTED_MIN_CYLINDER = 2
+
+
+class SimplifyFeatureRemoval(IntEnum):
+    """Per-feature-type removal level.
+
+    Values are provisional — actual COM enum values may differ.
+    """
+
+    NONE = 0
+    ALL = 1
+    BY_RANGE = 2
+
+
+class SimplifyOutputStyle(IntEnum):
+    """Output solid style for the simplified part.
+
+    Values are provisional — actual COM enum values may differ.
+    """
+
+    SINGLE_SOLID_NO_SEAMS = 0
+    SINGLE_SOLID_WITH_SEAMS = 1
+    MAINTAIN_EACH_SOLID = 2
+    SINGLE_COMPOSITE = 3

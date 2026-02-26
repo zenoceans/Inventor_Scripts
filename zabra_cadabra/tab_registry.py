@@ -31,10 +31,21 @@ def _make_inventor_export_tab(parent: tk.Widget, config: Any) -> ttk.Frame:
     return ExportToolGUI(parent, config)
 
 
+def _make_inventor_simplify_tab(parent: tk.Widget, config: Any) -> ttk.Frame:
+    from inventor_simplify_tool.gui import SimplifyToolGUI
+
+    return SimplifyToolGUI(parent, config)
+
+
 TABS: list[TabSpec] = [
     TabSpec(
         title="Inventor Export",
         factory=_make_inventor_export_tab,
         config_key="inventor_export",
+    ),
+    TabSpec(
+        title="STEP Simplify",
+        factory=_make_inventor_simplify_tab,
+        config_key="inventor_simplify",
     ),
 ]

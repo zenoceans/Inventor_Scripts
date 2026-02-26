@@ -65,3 +65,39 @@ class ExportError(InventorError):
 
 class TranslatorError(ExportError):
     """Translator add-in not found or not available."""
+
+
+class StepImportError(InventorError):
+    """Failed to import a STEP file."""
+
+    def __init__(self, path: str, cause: Exception | None = None) -> None:
+        self.path = path
+        self.cause = cause
+        msg = f"Failed to import STEP file: {path}"
+        if cause:
+            msg += f" ({_format_cause(cause)})"
+        super().__init__(msg)
+
+
+class SimplifyError(InventorError):
+    """Failed to simplify a document."""
+
+    def __init__(self, path: str, cause: Exception | None = None) -> None:
+        self.path = path
+        self.cause = cause
+        msg = f"Failed to simplify document: {path}"
+        if cause:
+            msg += f" ({_format_cause(cause)})"
+        super().__init__(msg)
+
+
+class SaveAsError(InventorError):
+    """Failed to save a document."""
+
+    def __init__(self, path: str, cause: Exception | None = None) -> None:
+        self.path = path
+        self.cause = cause
+        msg = f"Failed to save document: {path}"
+        if cause:
+            msg += f" ({_format_cause(cause)})"
+        super().__init__(msg)

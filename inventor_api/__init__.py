@@ -25,6 +25,20 @@ from inventor_api.exceptions import (
 )
 from inventor_api.traversal import DiscoveredComponent, walk_assembly
 from inventor_api.types import DocumentType, PropertySet, TranslatorId
+from inventor_api.exceptions import SaveAsError, SimplifyError, StepImportError
+from inventor_api.importer import import_step, is_assembly_document
+from inventor_api.simplifier import (
+    SimplifySettings,
+    simplify_assembly,
+    simplify_document,
+    simplify_part,
+)
+from inventor_api.types import (
+    SimplifyBoundingType,
+    SimplifyEnvelopeStyle,
+    SimplifyFeatureRemoval,
+    SimplifyOutputStyle,
+)
 
 __all__ = [
     "InventorApp",
@@ -42,4 +56,17 @@ __all__ = [
     "DocumentOpenError",
     "ExportError",
     "TranslatorError",
+    "StepImportError",
+    "SimplifyError",
+    "SaveAsError",
+    "import_step",
+    "is_assembly_document",
+    "SimplifySettings",
+    "simplify_part",
+    "simplify_assembly",
+    "simplify_document",
+    "SimplifyEnvelopeStyle",
+    "SimplifyBoundingType",
+    "SimplifyFeatureRemoval",
+    "SimplifyOutputStyle",
 ]
