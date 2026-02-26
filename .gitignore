@@ -11,4 +11,5 @@ build/
 .env
 *.log
 test_exports/
+test_imports/
 config.json
