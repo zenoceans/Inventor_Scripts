@@ -92,10 +92,25 @@ def _do_export(
 
     data_medium.FileName = output_path
 
+    # Suppress translator warning dialogs (e.g. PDF font substitution popups)
+    # so they don't block the batch flow.
+    old_silent = None
+    try:
+        old_silent = app.com_app.SilentOperation
+        app.com_app.SilentOperation = True
+    except Exception:
+        pass
+
     try:
         translator.SaveCopyAs(doc.com_object, context, options, data_medium)
     except Exception as e:
         raise ExportError(path=doc.full_path, format=translator_id.name, cause=e) from e
+    finally:
+        if old_silent is not None:
+            try:
+                app.com_app.SilentOperation = old_silent
+            except Exception:
+                pass
 
 
 def export_step(
@@ -183,8 +198,9 @@ def export_drawing(
     was_open = _is_document_open(app, idw_path)
 
     try:
-        # Open invisibly to avoid Vault checkout dialogs
-        drawing = app.open_document(idw_path, visible=False)
+        # Open visibly — the DWG translator requires a fully rendered document
+        # view with initialized sheets.  Opening invisibly causes E_INVALIDARG.
+        drawing = app.open_document(idw_path, visible=True)
     except Exception as e:
         raise DocumentOpenError(idw_path, cause=e) from e
 

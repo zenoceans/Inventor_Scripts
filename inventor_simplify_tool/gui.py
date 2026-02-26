@@ -60,6 +60,10 @@ class SimplifyToolGUI(ttk.Frame):
         self._tree.pack(side="left", fill="both", expand=True)
         tree_scroll.pack(side="right", fill="y")
 
+        # Double-click to edit the Output Name column
+        self._tree.bind("<Double-1>", self._on_tree_double_click)
+        self._edit_widget: tk.Entry | None = None
+
         # --- Table buttons ---
         tbl_btn_frame = ttk.Frame(root)
         tbl_btn_frame.pack(fill="x", **pad)
@@ -177,6 +181,58 @@ class SimplifyToolGUI(ttk.Frame):
     def _on_clear_all(self) -> None:
         for item in self._tree.get_children():
             self._tree.delete(item)
+
+    def _on_tree_double_click(self, event: tk.Event) -> None:
+        """Open an inline Entry on the Output Name column when double-clicked."""
+        region = self._tree.identify("region", event.x, event.y)
+        if region != "cell":
+            return
+        col = self._tree.identify_column(event.x)
+        if col != "#2":  # Only allow editing the Output Name column
+            return
+        item = self._tree.identify_row(event.y)
+        if not item:
+            return
+        self._start_cell_edit(item)
+
+    def _start_cell_edit(self, item: str) -> None:
+        """Place an Entry widget over the Output Name cell for editing."""
+        self._finish_cell_edit()  # close any previous edit
+
+        bbox = self._tree.bbox(item, column="output_name")
+        if not bbox:
+            return
+        x, y, w, h = bbox
+
+        vals = list(self._tree.item(item, "values"))
+        current_name = vals[1]
+
+        entry = tk.Entry(self._tree, font=("Segoe UI", 10))
+        entry.insert(0, current_name)
+        entry.select_range(0, "end")
+        entry.place(x=x, y=y, width=w, height=h)
+        entry.focus_set()
+
+        entry.bind("<Return>", lambda e: self._commit_cell_edit(item, entry))
+        entry.bind("<Escape>", lambda e: self._finish_cell_edit())
+        entry.bind("<FocusOut>", lambda e: self._commit_cell_edit(item, entry))
+
+        self._edit_widget = entry
+
+    def _commit_cell_edit(self, item: str, entry: tk.Entry) -> None:
+        """Save the edited value back to the Treeview row."""
+        new_name = entry.get().strip()
+        if new_name:
+            vals = list(self._tree.item(item, "values"))
+            vals[1] = new_name
+            self._tree.item(item, values=vals)
+        self._finish_cell_edit()
+
+    def _finish_cell_edit(self) -> None:
+        """Remove the inline edit widget."""
+        if self._edit_widget is not None:
+            self._edit_widget.destroy()
+            self._edit_widget = None
 
     # ------------------------------------------------------------------
     # Assembly target toggle
