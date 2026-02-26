@@ -1,6 +1,13 @@
 ========================================
-  Inventor Batch Export Tool - Usage Guide
+  Zabra-Cadabra - Usage Guide
 ========================================
+
+Zabra-Cadabra is a multi-tool desktop application for Autodesk Inventor 2026.
+It contains multiple tools organized as tabs in a single window.
+
+Current tools:
+  - Inventor Export: Batch-export STEP, DWG, PDF from assemblies
+  - STEP Simplify:   Import STEP files, simplify, save as .ipt
 
 REQUIREMENTS
 - Windows 10 or 11
@@ -8,13 +15,17 @@ REQUIREMENTS
 
 GETTING STARTED
 1. Unzip the folder to any location on your computer (e.g. Desktop or Documents).
-2. Open the folder and double-click "InventorExportTool.exe" to start.
+2. Open the folder and double-click "ZabraCadabra.exe" to start.
 3. If Windows SmartScreen warns you, click "More info" then "Run anyway".
    The tool is safe -- it only talks to Inventor on your computer.
 
+========================================
+  TAB 1: INVENTOR EXPORT
+========================================
+
 HOW TO USE
 1. Open your assembly in Inventor first.
-2. Launch InventorExportTool.exe.
+2. Launch ZabraCadabra.exe and go to the "Inventor Export" tab.
 3. Choose an output folder where exported files will be saved.
 4. Select which formats to export:
    - STEP (.step) -- 3D model file for other CAD programs
@@ -34,33 +45,62 @@ EXPORT SETTINGS (ADVANCED)
 Click the "Settings..." button to configure advanced options for each format:
 - STEP tab: Choose AP 203 or AP 214 protocol, set author/organization info
 - PDF tab: Set resolution (DPI), color options, which sheets to export
-- DWG tab: Point to a custom .ini settings file from Inventor
+- DWG: Uses Inventor's native SaveAs -- no advanced settings needed
 
 Your settings are saved automatically and remembered next time you open the tool.
-
-VIEWING THE LOG
-After an export finishes, click the "Open Log" button. This opens the log file
-in Notepad so you can review results, see any errors, and save or print it.
-
-Log files are saved in your output folder as "export_log_YYYYMMDD_HHMMSS.txt".
-
-CONFIGURATION FILE
-The tool creates a "config.json" file next to the .exe. This stores your
-settings between sessions. You do NOT need to edit this file -- use the
-checkboxes and Settings dialog in the tool instead.
-
-If something goes wrong, you can delete config.json and the tool will
-reset to default settings on next launch.
 
 DWG/PDF EXPORT NOTES
 - DWG and PDF export require an .idw drawing file with the same name as
   the part or assembly, in the same folder.
   Example: If you have "Bracket.ipt", there must be a "Bracket.idw" nearby.
 - If no .idw file is found, that component is skipped for DWG/PDF export.
+- DWG export uses Inventor's native format conversion (not a translator).
+- PDF font substitution warnings are suppressed automatically so they
+  don't interrupt the batch flow.
+
+========================================
+  TAB 2: STEP SIMPLIFY
+========================================
+
+HOW TO USE
+1. Make sure Inventor is running.
+2. Launch ZabraCadabra.exe and go to the "STEP Simplify" tab.
+3. Click "Add Files..." and select one or more STEP files (.stp or .step).
+4. The files appear in the table with columns:
+   - STEP File: the source file path
+   - Output Name: the name for the simplified .ipt (editable -- double-click to change)
+   - Output Folder: where the .ipt will be saved
+5. To change the output folder, select rows and click "Set Output Folder...".
+   If no rows are selected, it applies to all rows.
+6. (Optional) To insert simplified parts into an assembly:
+   - Check "Insert simplified .ipt into target assembly"
+   - Browse to your target .iam assembly file
+7. Click "Run Simplify" to start processing.
+8. Each STEP file is imported into Inventor, simplified, and saved as .ipt.
+   Progress and results are shown in the log area below.
+9. Click "Cancel" at any time to stop after the current file finishes.
+
+========================================
+  GENERAL
+========================================
+
+VIEWING THE LOG
+After an export or simplify run finishes, click the "Open Log" button.
+This opens the log file in Notepad so you can review results, see any
+errors, and save or print it.
+
+CONFIGURATION FILES
+The tool creates configuration files next to the .exe:
+- config.json -- Inventor Export settings
+- simplify_config.json -- STEP Simplify settings
+
+You do NOT need to edit these files -- use the GUI controls instead.
+If something goes wrong, you can delete these files and the tool will
+reset to default settings on next launch.
 
 TROUBLESHOOTING
-- "Cannot connect to Inventor" -- Make sure Inventor is running and an
-  assembly is open before you launch the tool.
+- "Cannot connect to Inventor" -- Make sure Inventor is running and a
+  document is open before you launch the tool.
 - Export fails for a file -- Check that the file is not open in another
   program and not checked out by someone else in Vault.
 - Tool does not start -- Make sure you extracted ALL files from the zip.
@@ -70,5 +110,5 @@ TROUBLESHOOTING
 
 UPDATES
 When you receive a new version, simply replace the entire folder with
-the new one. Your config.json can be copied over if you want to keep
-your settings.
+the new one. Your config files (config.json, simplify_config.json) can
+be copied over if you want to keep your settings.

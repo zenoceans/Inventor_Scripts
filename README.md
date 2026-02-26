@@ -1,21 +1,43 @@
-# Inventor Export Tool
+# Zabra-Cadabra
 
-A Windows desktop utility that connects to a running Autodesk Inventor 2026 instance via COM, scans the active assembly tree, and batch-exports every unique component and drawing to STEP, DWG, and/or PDF. A Tkinter GUI lets you configure output options, preview exactly which files will be written (with resolved filenames), and then run the export with a live progress display.
+A multi-tab Windows desktop application for Autodesk Inventor 2026 automation. Built on a reusable Pythonic COM API wrapper, it bundles multiple engineering tools in a single `.exe` with a black-and-white minimalist UI.
+
+**Current tools:**
+
+| Tab | Description |
+|---|---|
+| **Inventor Export** | Batch-export STEP, DWG, and PDF from assemblies |
+| **STEP Simplify** | Import STEP files, apply Inventor's Simplify feature, and save as `.ipt` |
 
 ---
 
 ## Features
 
+### Inventor Export tab
 - Connects to a running Inventor process via the COM API — no macro installation required
 - Recursively walks the full assembly tree and deduplicates components by file path
 - Optionally skips suppressed occurrences and Content Center parts
 - Exports STEP (AP242), DWG, and PDF in a single pass
 - Auto-discovers co-located `.idw` drawing files for DWG/PDF export
+- DWG export uses Inventor's native `SaveAs` (no translator INI required)
+- PDF export suppresses translator warning dialogs (e.g. font substitution) automatically
 - Composes output filenames as `<PartName>-<Revision>.<ext>` (e.g. `Bracket-B.step`)
 - Detects and resolves filename collisions with `_2`, `_3` suffixes
 - GUI scan → preview → export workflow with live progress and per-file results
-- Config persisted to `config.json` between sessions
-- Configurable translator options per format (STEP protocol, PDF resolution, DWG settings)
+- Configurable translator options per format (STEP protocol, PDF resolution)
+
+### STEP Simplify tab
+- Batch import `.stp`/`.step` files into Inventor
+- Apply Inventor's 3D Simplify feature (envelope replacement, feature removal, body filtering)
+- Save simplified geometry as `.ipt` part files
+- Set custom output name per file (double-click the Output Name column to edit)
+- Optionally insert simplified parts into a target assembly
+- Configurable simplify settings (envelope style, bounding type, feature removal levels)
+
+### General
+- Config persisted to `config.json` and `simplify_config.json` between sessions
+- Zen-branded header with logo
+- Black-and-white minimalist theme
 
 ---
 
@@ -23,7 +45,7 @@ A Windows desktop utility that connects to a running Autodesk Inventor 2026 inst
 
 - Windows 10/11
 - Autodesk Inventor 2026 (must be running before launching the tool)
-- Python 3.10 or later
+- Python 3.10 or later (for development only — not needed for the `.exe`)
 - `pywin32` (installed automatically via `uv sync`)
 
 ---
@@ -40,22 +62,44 @@ uv sync
 
 ## Usage
 
+### From source
+
+```
+uv run python -m zabra_cadabra
+```
+
+Or using the backward-compatible entry:
+
 ```
 uv run python -m inventor_export_tool
 ```
 
-**GUI workflow:**
+### From the `.exe`
+
+Double-click `ZabraCadabra.exe`. See `usage_guide.txt` (bundled in the dist folder) for end-user instructions.
+
+### Inventor Export workflow
 
 1. **Configure** — Choose an output folder, select which export formats to produce (STEP, DWG, PDF), and set component filters (parts, sub-assemblies, top-level assembly, suppressed).
-2. **Scan** — Click "Scan Assembly". The tool connects to Inventor, walks the active assembly tree, discovers all unique components and their co-located IDW drawings, and populates the preview table. No files are written at this stage.
-3. **Preview** — Review the table of planned output files. Each row shows the source component, the resolved output filename, and the export type. Collisions are resolved before you see the list.
-4. **Export** — Click "Export". Files are written to the output folder. A progress bar advances per file, and each row is marked success or failure. A summary is shown on completion.
+2. **Scan** — Click "Scan Assembly". The tool connects to Inventor, walks the active assembly tree, discovers all unique components and their co-located IDW drawings, and populates the preview table.
+3. **Preview** — Review the table of planned output files. Each row shows the source component, the resolved output filename, and the export type.
+4. **Export** — Click "Export". Files are written to the output folder. A progress bar advances per file, and each row is marked success or failure.
+
+### STEP Simplify workflow
+
+1. **Add files** — Click "Add Files..." and select one or more `.stp`/`.step` files.
+2. **Set output names** — Double-click the Output Name column to rename any file. By default the STEP filename is used.
+3. **Set output folder** — Click "Set Output Folder..." to choose where simplified `.ipt` files are saved.
+4. **Assembly (optional)** — Check "Insert simplified .ipt into target assembly" and browse to a `.iam` file.
+5. **Run** — Click "Run Simplify". Each file is imported, simplified, and saved. Progress is shown in the log.
 
 ---
 
 ## Export Options
 
-Translator-specific options are configured in `config.json` under the `export_options` key. Each format (`step`, `pdf`, `dwg`) has its own set of options that map directly to Inventor's translator add-in settings. Omit a format key or leave it as `{}` to use Inventor's built-in defaults.
+Translator-specific options are configured in `config.json` under the `export_options` key. Each format (`step`, `pdf`) has its own set of options that map directly to Inventor's translator add-in settings. Omit a format key or leave it as `{}` to use Inventor's built-in defaults.
+
+> **Note:** DWG export uses Inventor's native `Document.SaveAs` rather than a translator add-in, so there are no configurable DWG translator options.
 
 ### Example `config.json`
 
@@ -77,8 +121,7 @@ Translator-specific options are configured in `config.json` under the `export_op
       "Vector_Resolution": 400,
       "All_Color_AS_Black": 0,
       "Remove_Line_Weights": 0
-    },
-    "dwg": {}
+    }
   }
 }
 ```
@@ -97,7 +140,7 @@ Options for the STEP translator (`{90AF7F40-0C01-11D5-8E83-0010B541CD80}`).
 
 ### PDF Options
 
-Options for the PDF translator (`{0AC6FD96-2F4D-42CE-8BE0-8AEA580399E4}`). Used when exporting from IDW drawing files.
+Options for the PDF translator (`{0AC6FD96-2F4D-42CE-8BE0-8AEA580399E4}`). Used when exporting from IDW drawing files. Translator warning dialogs (e.g. font substitution popups) are suppressed automatically via `SilentOperation` so they don't block the batch flow.
 
 | Option | Type | Values | Description |
 |---|---|---|---|
@@ -108,13 +151,11 @@ Options for the PDF translator (`{0AC6FD96-2F4D-42CE-8BE0-8AEA580399E4}`). Used 
 | `Custom_Begin_Sheet` | `int` | Sheet number (1-based) | First sheet to include when `Sheet_Range` is `1`. |
 | `Custom_End_Sheet` | `int` | Sheet number (1-based) | Last sheet to include when `Sheet_Range` is `1`. |
 
-### DWG Options
+### DWG Export
 
-Options for the DWG translator (`{C24E3AC4-122E-11D5-8E91-0010B541CD80}`). Used when exporting from IDW drawing files.
+DWG export converts IDW drawings to DWG using Inventor's native `Document.SaveAs` method. This is more reliable than the DWG translator add-in for batch automation because it does not require an ACAD INI configuration file and works on documents opened invisibly (without triggering Vault checkout dialogs).
 
-| Option | Type | Values | Description |
-|---|---|---|---|
-| `Export_Acad_IniFile` | `str` | File path | Path to an `.ini` file containing DWG export settings. Create this file by opening Inventor's "Save Copy As" dialog for DWG format, configuring settings, and clicking "Save Configuration". |
+There are no user-configurable options for DWG export — Inventor uses its built-in defaults.
 
 ### Notes
 
@@ -129,26 +170,73 @@ Options for the DWG translator (`{C24E3AC4-122E-11D5-8E91-0010B541CD80}`). Used 
 
 ```
 Inventor_Scripts/
-├── inventor_api/               # Low-level COM wrapper (reusable library)
-│   ├── __init__.py             # Public re-exports
-│   ├── application.py          # InventorApp — connect, open docs, active doc
-│   ├── document.py             # InventorDocument, AssemblyDocument, ComponentOccurrence
-│   ├── traversal.py            # walk_assembly — recursive tree walk
-│   ├── exporters.py            # export_step, export_dwg, export_pdf, export_drawing
-│   ├── types.py                # DocumentType, TranslatorId, PropertySet enums
-│   ├── exceptions.py           # InventorError hierarchy
-│   └── _com_threading.py       # com_thread_scope context manager
+├── zabra_cadabra/                 # Shell application (multi-tab GUI host)
+│   ├── __init__.py
+│   ├── __main__.py                # Entry point: python -m zabra_cadabra
+│   ├── app.py                     # main() — load configs, create shell, mainloop
+│   ├── shell.py                   # ZabraApp — Tk root, header, Notebook, theme
+│   ├── theme.py                   # apply_bw_theme() — black/white ttk.Style
+│   └── tab_registry.py            # TabSpec + TABS list
 │
-└── inventor_export_tool/       # Application layer (GUI + orchestration)
-    ├── __main__.py             # Entry point
-    ├── models.py               # ComponentInfo, ExportItem, ExportResult, ScanSummary
-    ├── config.py               # AppConfig, load_config, save_config
-    ├── naming.py               # compose_filename, find_idw_path, resolve_duplicates
-    ├── export_log.py           # Export run logging
-    └── gui/                    # Tkinter GUI components
+├── inventor_api/                  # Low-level COM wrapper (reusable library)
+│   ├── __init__.py                # Public re-exports
+│   ├── application.py             # InventorApp — connect, lifecycle
+│   ├── document.py                # InventorDocument, AssemblyDocument, ComponentOccurrence
+│   ├── properties.py              # iProperty access
+│   ├── traversal.py               # walk_assembly — recursive tree walk
+│   ├── exporters.py               # export_step, export_dwg, export_pdf, export_drawing
+│   ├── importer.py                # import_step — STEP file import
+│   ├── simplifier.py              # simplify_part, simplify_assembly, simplify_document
+│   ├── types.py                   # Enums, constants (DocumentType, Simplify enums)
+│   ├── exceptions.py              # InventorError hierarchy
+│   └── _com_threading.py          # com_thread_scope context manager
+│
+├── inventor_export_tool/          # Inventor Export tab (GUI + orchestration)
+│   ├── __init__.py
+│   ├── __main__.py                # Entry point (redirects to zabra_cadabra)
+│   ├── app.py                     # Redirects to zabra_cadabra.app.main()
+│   ├── gui.py                     # ExportToolGUI (ttk.Frame tab)
+│   ├── models.py                  # ComponentInfo, ExportItem, ExportResult, ScanSummary
+│   ├── config.py                  # AppConfig, load_config, save_config
+│   ├── naming.py                  # Filename composition, IDW finding
+│   ├── export_log.py              # Export run logging
+│   ├── orchestrator.py            # Scan + export logic
+│   └── settings_dialog.py         # Advanced export settings dialog
+│
+├── inventor_simplify_tool/        # STEP Simplify tab (GUI + orchestration)
+│   ├── __init__.py
+│   ├── gui.py                     # SimplifyToolGUI (ttk.Frame tab)
+│   ├── models.py                  # SimplifyRow, SimplifyResult, SimplifySummary
+│   ├── config.py                  # SimplifyConfig, load/save
+│   ├── orchestrator.py            # Batch simplify logic
+│   └── simplify_log.py            # Simplify run logging
+│
+└── tests/
+    ├── conftest.py                # Mock COM factories
+    ├── test_naming.py
+    ├── test_models.py
+    ├── test_config.py
+    ├── test_export_log.py
+    └── inventor_api/
+        ├── test_types.py
+        ├── test_document.py
+        ├── test_traversal.py
+        └── test_exporters.py
 ```
 
-`inventor_api` has no dependency on `inventor_export_tool`. The application layer imports `inventor_api` to perform COM operations and maps results onto its own model types.
+### Architecture boundaries
+
+- **`inventor_api`**: Pythonic COM wrapper. Returns its own types. No imports from application packages.
+- **`inventor_export_tool`**: Export tab logic. Imports from `inventor_api`.
+- **`inventor_simplify_tool`**: Simplify tab logic. Imports from `inventor_api`.
+- **`zabra_cadabra`**: Shell application. Imports tab factories from both tool packages.
+- **GUI** modules (`gui.py`): No direct COM or `inventor_api` calls — go through orchestrators on background threads.
+
+### Adding a new tab
+
+1. Create a package `inventor_<tool_name>/` with `gui.py` exposing a `ttk.Frame` subclass with `start_polling()` and `close()` methods.
+2. Add a factory function and `TabSpec` entry in `zabra_cadabra/tab_registry.py`.
+3. If the tab needs persistent config, add loading/saving in `zabra_cadabra/app.py`.
 
 ---
 
@@ -224,8 +312,6 @@ ComponentOccurrence(com_occurrence: object) -> None
 
 #### `@dataclass DiscoveredComponent`
 
-A component found during assembly traversal.
-
 ```python
 @dataclass
 class DiscoveredComponent:
@@ -247,12 +333,6 @@ def walk_assembly(
 
 Recursively walk an assembly tree and return all discovered components. The root assembly is included first with `is_top_level=True`. Duplicate documents (same file path) are visited only once. Sub-assemblies are recursed into automatically.
 
-| Parameter | Default | Description |
-|---|---|---|
-| `assembly` | — | Root assembly to traverse. |
-| `include_suppressed` | `False` | Include suppressed occurrences. |
-| `include_content_center` | `False` | Include Content Center parts. |
-
 ---
 
 ### `inventor_api.exporters` — Format export functions
@@ -272,19 +352,6 @@ def export_step(
 
 Export a part or assembly to STEP format (AP242 on Inventor 2026). The output directory is created if it does not exist. Pass `options` to override translator defaults (see [STEP Options](#step-options)).
 
-#### `export_dwg`
-
-```python
-def export_dwg(
-    app: InventorApp,
-    drawing: InventorDocument,
-    output_path: str | Path,
-    options: dict[str, Any] | None = None,
-) -> None
-```
-
-Export a drawing document (`.idw`) to DWG format. Pass `options` to override translator defaults (see [DWG Options](#dwg-options)).
-
 #### `export_pdf`
 
 ```python
@@ -296,7 +363,7 @@ def export_pdf(
 ) -> None
 ```
 
-Export a drawing document (`.idw`) to PDF format. Pass `options` to override translator defaults (see [PDF Options](#pdf-options)).
+Export a drawing document (`.idw`) to PDF format. Translator warning dialogs are suppressed via `SilentOperation`. Pass `options` to override translator defaults (see [PDF Options](#pdf-options)).
 
 #### `export_drawing`
 
@@ -317,9 +384,105 @@ Open an `.idw` file, export it, then close it (only if it was not already open b
 | `idw_path` | Path to the `.idw` source file. |
 | `output_path` | Full path for the output file. |
 | `fmt` | `"dwg"` or `"pdf"`. Raises `ValueError` for other values. |
-| `options` | Translator option overrides. See [Export Options](#export-options). |
+| `options` | Translator option overrides (PDF only — DWG uses native SaveAs). |
+
+For DWG format, uses `Document.SaveAs` (Inventor's native DWG support) instead of the translator add-in. For PDF format, uses the translator add-in pipeline. IDW documents are opened invisibly to avoid Vault checkout dialogs.
 
 Raises `DocumentOpenError` if the IDW cannot be opened, `ExportError` if the export fails.
+
+---
+
+### `inventor_api.importer` — STEP file import
+
+#### `import_step`
+
+```python
+def import_step(
+    app: InventorApp,
+    step_path: str | Path,
+    *,
+    visible: bool = True,
+) -> InventorDocument
+```
+
+Open a STEP file in Inventor using the native STEP translator. Inventor auto-detects STEP format from the file extension. The result is either a `PartDocument` or `AssemblyDocument` depending on the STEP content.
+
+Returns `AssemblyDocument` for assemblies, `InventorDocument` for parts. Raises `StepImportError` if the file does not exist or cannot be opened.
+
+#### `is_assembly_document`
+
+```python
+def is_assembly_document(doc: InventorDocument) -> bool
+```
+
+Return `True` if the document is an assembly (`.iam`).
+
+---
+
+### `inventor_api.simplifier` — Simplify feature
+
+#### `@dataclass SimplifySettings`
+
+Settings passed to the Simplify COM API. All enum fields use the `IntEnum` types from `inventor_api.types`. Fields left as `None` are skipped — Inventor uses its own defaults.
+
+```python
+@dataclass
+class SimplifySettings:
+    envelope_style: SimplifyEnvelopeStyle | None = None
+    bounding_type: SimplifyBoundingType | None = None
+    remove_internal_bodies: bool | None = None
+    remove_bodies_by_size: bool | None = None
+    remove_bodies_size_cm: float | None = None
+    remove_holes: SimplifyFeatureRemoval | None = None
+    remove_fillets: SimplifyFeatureRemoval | None = None
+    remove_chamfers: SimplifyFeatureRemoval | None = None
+    remove_pockets: SimplifyFeatureRemoval | None = None
+    remove_embosses: SimplifyFeatureRemoval | None = None
+    remove_tunnels: SimplifyFeatureRemoval | None = None
+    output_style: SimplifyOutputStyle | None = None
+    raw_options: dict[str, Any] = field(default_factory=dict)
+```
+
+The `raw_options` dict allows setting arbitrary COM properties by name, for properties not yet enumerated.
+
+#### `simplify_document`
+
+```python
+def simplify_document(
+    app: InventorApp,
+    doc: InventorDocument,
+    output_path: str | Path,
+    settings: SimplifySettings,
+) -> InventorDocument
+```
+
+Primary entry point. Dispatches to `simplify_part` or `simplify_assembly` based on document type. Returns the saved output `.ipt`, left open in Inventor.
+
+#### `simplify_part`
+
+```python
+def simplify_part(
+    app: InventorApp,
+    doc: InventorDocument,
+    output_path: str | Path,
+    settings: SimplifySettings,
+) -> InventorDocument
+```
+
+Apply Simplify to a Part document in-place and SaveAs to `output_path`. Raises `SimplifyError` if the simplify feature fails, `SaveAsError` if SaveAs fails.
+
+#### `simplify_assembly`
+
+```python
+def simplify_assembly(
+    app: InventorApp,
+    doc: AssemblyDocument,
+    output_path: str | Path,
+    settings: SimplifySettings,
+) -> InventorDocument
+```
+
+Apply Assembly Simplify to an `.iam`, producing a new derived `.ipt`. The original assembly is closed without saving. Raises `SimplifyError` or `SaveAsError`.
 
 ---
 
@@ -336,7 +499,7 @@ class DocumentType(IntEnum):
 
 #### `class TranslatorId(str, Enum)`
 
-GUIDs for Inventor translator add-ins used by the export functions.
+GUIDs for Inventor translator add-ins.
 
 ```python
 class TranslatorId(str, Enum):
@@ -360,13 +523,28 @@ class PropertySet(str, Enum):
     USER_DEFINED     = "Inventor User Defined Properties"
 ```
 
+#### Simplify enumerations
+
+```python
+class SimplifyEnvelopeStyle(IntEnum):
+    NONE = 0, WHOLE_PART = 1, EACH_BODY = 2, SELECTED_BODIES = 3
+
+class SimplifyBoundingType(IntEnum):
+    ORTHOGONAL = 0, ORIENTED_MIN_BB = 1, ORIENTED_MIN_CYLINDER = 2
+
+class SimplifyFeatureRemoval(IntEnum):
+    NONE = 0, ALL = 1, BY_RANGE = 2
+
+class SimplifyOutputStyle(IntEnum):
+    SINGLE_SOLID_NO_SEAMS = 0, SINGLE_SOLID_WITH_SEAMS = 1,
+    MAINTAIN_EACH_SOLID = 2, SINGLE_COMPOSITE = 3
+```
+
 #### `IO_MECHANISM`
 
 ```python
 IO_MECHANISM: int = 13059  # kFileBrowseIOMechanism
 ```
-
-Used when setting `TranslationContext.Type` on the COM translation context.
 
 ---
 
@@ -379,23 +557,20 @@ InventorError
 ├── DocumentOpenError           # Failed to open a document
 │       .path: str
 │       .cause: Exception | None
-└── ExportError                 # Failed to export a document
+├── ExportError                 # Failed to export a document
+│       .path: str
+│       .format: str
+│       .cause: Exception | None
+│   └── TranslatorError         # Translator add-in not found
+├── StepImportError             # Failed to import a STEP file
+│       .path: str
+│       .cause: Exception | None
+├── SimplifyError               # Failed to simplify a document
+│       .path: str
+│       .cause: Exception | None
+└── SaveAsError                 # Failed to save a document
         .path: str
-        .format: str
         .cause: Exception | None
-    └── TranslatorError         # Translator add-in not found
-```
-
-#### `DocumentOpenError`
-
-```python
-DocumentOpenError(path: str, cause: Exception | None = None)
-```
-
-#### `ExportError`
-
-```python
-ExportError(path: str, format: str, cause: Exception | None = None)
 ```
 
 ---
@@ -427,8 +602,6 @@ with com_thread_scope():
 
 #### `@dataclass ComponentInfo`
 
-A discovered component in the assembly tree.
-
 ```python
 @dataclass
 class ComponentInfo:
@@ -444,8 +617,6 @@ class ComponentInfo:
 
 #### `@dataclass ExportItem`
 
-A single file to be exported.
-
 ```python
 @dataclass
 class ExportItem:
@@ -457,8 +628,6 @@ class ExportItem:
 
 #### `@dataclass ExportResult`
 
-Result of exporting one item.
-
 ```python
 @dataclass
 class ExportResult:
@@ -469,8 +638,6 @@ class ExportResult:
 ```
 
 #### `@dataclass ScanSummary`
-
-Summary produced by a dry-run scan.
 
 ```python
 @dataclass
@@ -488,8 +655,6 @@ class ScanSummary:
 
 #### `@dataclass AppConfig`
 
-User-configurable settings persisted to `config.json`.
-
 ```python
 @dataclass
 class AppConfig:
@@ -506,29 +671,12 @@ class AppConfig:
 
 The `export_options` field holds per-format translator settings. See [Export Options](#export-options) for the full reference.
 
-#### `get_config_path`
-
-```python
-def get_config_path() -> Path
-```
-
-Return path to `config.json` next to the main script or PyInstaller executable.
-
-#### `load_config`
+#### `load_config` / `save_config`
 
 ```python
 def load_config(path: Path | None = None) -> AppConfig
-```
-
-Load config from a JSON file. Returns an `AppConfig` with defaults if the file is missing or corrupt. Unknown keys are silently ignored.
-
-#### `save_config`
-
-```python
 def save_config(config: AppConfig, path: Path | None = None) -> None
 ```
-
-Serialize `config` to JSON and write it to disk.
 
 ---
 
@@ -540,7 +688,7 @@ Serialize `config` to JSON and write it to disk.
 def sanitize_filename(name: str) -> str
 ```
 
-Remove or replace characters that are invalid in Windows filenames (`< > : " / \ | ? *` and control characters). Trailing dots and spaces are stripped. Returns `"_"` if the result would be empty.
+Remove or replace characters that are invalid in Windows filenames.
 
 #### `compose_filename`
 
@@ -548,14 +696,7 @@ Remove or replace characters that are invalid in Windows filenames (`< > : " / \
 def compose_filename(display_name: str, revision: str, extension: str) -> str
 ```
 
-Compose an export filename from its parts.
-
-```
-compose_filename("Bracket", "B", "step")  ->  "Bracket-B.step"
-compose_filename("Plate", "", "dwg")      ->  "Plate-NoRev.dwg"
-```
-
-An empty or whitespace-only `revision` is replaced with `"NoRev"`. `extension` must not include the leading dot.
+Compose an export filename: `compose_filename("Bracket", "B", "step")` → `"Bracket-B.step"`. Empty revision becomes `"NoRev"`.
 
 #### `find_idw_path`
 
@@ -563,15 +704,7 @@ An empty or whitespace-only `revision` is replaced with `"NoRev"`. `extension` m
 def find_idw_path(source_path: str) -> str | None
 ```
 
-Find the co-located `.idw` file for a given `.ipt` or `.iam` file. Checks both `.idw` and `.IDW`. Returns `None` if no drawing file exists.
-
-#### `is_content_center_path`
-
-```python
-def is_content_center_path(file_path: str) -> bool
-```
-
-Return `True` if `file_path` contains `"content center files"` (case-insensitive).
+Find the co-located `.idw` file for a given `.ipt` or `.iam` file.
 
 #### `resolve_duplicates`
 
@@ -579,25 +712,84 @@ Return `True` if `file_path` contains `"content center files"` (case-insensitive
 def resolve_duplicates(items: list[ExportItem]) -> list[ExportItem]
 ```
 
-Detect output filename collisions across a list of `ExportItem` objects and append `_2`, `_3`, … suffixes to conflicting items. Mutates `output_filename` and `output_path` on affected items and returns the same list.
+Detect output filename collisions and append `_2`, `_3`, ... suffixes to conflicting items.
+
+---
+
+## `inventor_simplify_tool` API Reference
+
+### `inventor_simplify_tool.models` — Data models
+
+#### `@dataclass SimplifyRow`
+
+```python
+@dataclass
+class SimplifyRow:
+    step_path: str            # Absolute path to the .stp/.step file
+    output_filename: str      # Desired output filename (without .ipt extension)
+    output_folder: str        # Destination folder for the simplified .ipt
+```
+
+#### `@dataclass SimplifyResult`
+
+```python
+@dataclass
+class SimplifyResult:
+    row: SimplifyRow
+    success: bool
+    output_path: str | None = None
+    imported_as_assembly: bool = False
+    error_message: str | None = None
+    duration_seconds: float = 0.0
+```
+
+#### `@dataclass SimplifySummary`
+
+```python
+@dataclass
+class SimplifySummary:
+    total_rows: int
+    succeeded: int
+    failed: int
+    results: list[SimplifyResult] = field(default_factory=list)
+```
+
+### `inventor_simplify_tool.config` — Configuration persistence
+
+#### `@dataclass SimplifyConfig`
+
+```python
+@dataclass
+class SimplifyConfig:
+    simplify_settings: dict[str, Any] = field(default_factory=dict)
+    target_assembly_path: str = ""
+    add_to_assembly: bool = False
+```
+
+Persisted to `simplify_config.json` next to the executable.
+
+#### `load_simplify_config` / `save_simplify_config`
+
+```python
+def load_simplify_config(path: Path | None = None) -> SimplifyConfig
+def save_simplify_config(config: SimplifyConfig, path: Path | None = None) -> None
+```
 
 ---
 
 ## Building a Standalone Executable
-
-To create a standalone `.exe` that can be distributed to users without Python:
 
 ```bash
 uv sync            # Install dependencies including PyInstaller
 uv run python build.py
 ```
 
-This produces a `dist/InventorExportTool/` folder containing:
-- `InventorExportTool.exe` — the application
+This produces a `dist/ZabraCadabra/` folder containing:
+- `ZabraCadabra.exe` — the application
+- `_internal/` — supporting DLLs, libraries, and the Zen logo
 - `usage_guide.txt` — instructions for end users
-- Supporting DLLs and libraries
 
-**To distribute:** Zip the entire `dist/InventorExportTool/` folder and send it. The recipient unzips and double-clicks the `.exe`. No Python or other tools required — only Inventor.
+**To distribute:** Zip the entire `dist/ZabraCadabra/` folder and send it. The recipient unzips and double-clicks the `.exe`. No Python or other tools required — only Inventor.
 
 ---
 
@@ -609,13 +801,14 @@ git clone <repo-url>
 cd Inventor_Scripts
 uv sync
 
+# Run the app
+uv run python -m zabra_cadabra
+
 # Run tests
 uv run pytest
 
-# Lint
+# Lint and format
 uv run ruff check .
-
-# Format
 uv run ruff format .
 ```
 
