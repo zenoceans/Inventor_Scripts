@@ -198,13 +198,21 @@ def export_drawing(
     was_open = _is_document_open(app, idw_path)
 
     try:
-        # Open visibly — the DWG translator requires a fully rendered document
-        # view with initialized sheets.  Opening invisibly causes E_INVALIDARG.
-        drawing = app.open_document(idw_path, visible=True)
+        # Open invisibly to avoid Vault checkout dialogs.
+        drawing = app.open_document(idw_path, visible=False)
     except Exception as e:
         raise DocumentOpenError(idw_path, cause=e) from e
 
     try:
+        # The DWG translator needs an initialized view.  Invisible documents
+        # have no views, so we create one.  This avoids E_INVALIDARG without
+        # making the document visible (which triggers Vault checkout dialogs).
+        try:
+            if not drawing.com_object.Views.Count:
+                drawing.com_object.Views.Add()
+        except Exception:
+            pass
+
         _do_export(app, drawing, output_path, translator_id, option_overrides=options)
     finally:
         if not was_open:
