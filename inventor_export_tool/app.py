@@ -1,22 +1,9 @@
-"""Application entry point — loads config and launches GUI."""
+"""Application entry point — delegates to Zabra-Cadabra shell."""
 
 from __future__ import annotations
 
-import sys
-
-from inventor_export_tool.config import load_config, save_config
-from inventor_export_tool.gui import ExportToolGUI
-
 
 def main() -> None:
-    if sys.platform != "win32":
-        print("This tool requires Windows (Inventor COM automation).")
-        sys.exit(1)
+    from zabra_cadabra.app import main as zabra_main
 
-    config = load_config()
-    gui = ExportToolGUI(config)
-
-    try:
-        gui.run()
-    finally:
-        save_config(config)
+    zabra_main()

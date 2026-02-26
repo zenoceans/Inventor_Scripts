@@ -9,15 +9,18 @@ import PyInstaller.__main__
 
 
 def build() -> None:
-    """Build the InventorExportTool executable."""
+    """Build the ZabraCadabra executable."""
     PyInstaller.__main__.run(
         [
-            "inventor_export_tool/__main__.py",
+            "zabra_cadabra/__main__.py",
             "--name",
-            "InventorExportTool",
+            "ZabraCadabra",
             "--windowed",
             "--noconfirm",
             "--clean",
+            # Bundle logo asset
+            "--add-data",
+            "Zen LOGO SMUSS.png;.",
             # pywin32 hidden imports
             "--hidden-import",
             "pythoncom",
@@ -53,11 +56,13 @@ def build() -> None:
         ]
     )
     # Copy usage guide into dist folder
-    dist_dir = Path("dist/InventorExportTool")
-    shutil.copy("usage_guide.txt", dist_dir / "usage_guide.txt")
+    dist_dir = Path("dist/ZabraCadabra")
+    usage_guide = Path("usage_guide.txt")
+    if usage_guide.exists():
+        shutil.copy(usage_guide, dist_dir / "usage_guide.txt")
 
-    print("\nBuild complete: dist/InventorExportTool/")
-    print("Folder contains InventorExportTool.exe and usage_guide.txt.")
+    print("\nBuild complete: dist/ZabraCadabra/")
+    print("Folder contains ZabraCadabra.exe and supporting files.")
     print("Zip the folder and distribute to your user.")
 
 

@@ -1,13 +1,14 @@
 [project]
-name = "inventor-export-tool"
+name = "zabra-cadabra"
 version = "0.1.0"
-description = "Batch export STEP/DWG/PDF from Autodesk Inventor assemblies"
+description = "Zabra-Cadabra — multi-tool automation suite for Autodesk Inventor"
 requires-python = ">=3.10"
 dependencies = [
     "pywin32>=306",
 ]
 
 [project.gui-scripts]
+zabra-cadabra = "zabra_cadabra.app:main"
 inventor-export-tool = "inventor_export_tool.app:main"
 
 [dependency-groups]

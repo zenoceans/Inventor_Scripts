@@ -13,28 +13,24 @@ if TYPE_CHECKING:
     from inventor_export_tool.config import AppConfig
 
 
-class ExportToolGUI:
-    """Main application window."""
+class ExportToolGUI(ttk.Frame):
+    """Inventor Export tab content — embeddable in a notebook."""
 
     POLL_INTERVAL_MS = 100
 
-    def __init__(self, config: AppConfig) -> None:
+    def __init__(self, parent: tk.Widget, config: AppConfig) -> None:
+        super().__init__(parent)
         self._config = config
         self._queue: queue.Queue[tuple[str, object]] = queue.Queue()
         self._cancel_event = Event()
         self._worker_thread: Thread | None = None
         self._last_log_path: str | None = None
 
-        self._root = tk.Tk()
-        self._root.title("Inventor Batch Export Tool")
-        self._root.minsize(650, 550)
-        self._root.resizable(True, True)
-
         self._build_ui()
         self._load_config()
 
     def _build_ui(self) -> None:
-        root = self._root
+        root = self
         pad = {"padx": 8, "pady": 4}
 
         # --- Assembly section ---
@@ -139,7 +135,18 @@ class ExportToolGUI:
         log_frame = ttk.LabelFrame(root, text="Log", padding=4)
         log_frame.pack(fill="both", expand=True, **pad)
 
-        self._log_text = tk.Text(log_frame, height=12, state="disabled", wrap="word")
+        self._log_text = tk.Text(
+            log_frame,
+            height=12,
+            state="disabled",
+            wrap="word",
+            bg="#f5f5f5",
+            fg="#000000",
+            insertbackground="#000000",
+            selectbackground="#000000",
+            selectforeground="#ffffff",
+            font=("Consolas", 9),
+        )
         scrollbar = ttk.Scrollbar(log_frame, orient="vertical", command=self._log_text.yview)
         self._log_text.configure(yscrollcommand=scrollbar.set)
         self._log_text.pack(side="left", fill="both", expand=True)
@@ -251,7 +258,7 @@ class ExportToolGUI:
                     self._on_worker_done()
         except queue.Empty:
             pass
-        self._root.after(self.POLL_INTERVAL_MS, self._process_queue)
+        self.after(self.POLL_INTERVAL_MS, self._process_queue)
 
     def _append_log(self, message: str) -> None:
         self._log_text.configure(state="normal")
@@ -346,16 +353,14 @@ class ExportToolGUI:
         self._cancel_event.set()
         self._append_log("Cancelling...")
 
-    def run(self) -> None:
-        """Start the GUI main loop."""
-        self._root.after(self.POLL_INTERVAL_MS, self._process_queue)
-        self._root.protocol("WM_DELETE_WINDOW", self._on_close)
-        self._root.mainloop()
+    def start_polling(self) -> None:
+        """Start the queue poller. Called by the shell after tab is placed."""
+        self.after(self.POLL_INTERVAL_MS, self._process_queue)
 
     def _on_settings(self) -> None:
         from inventor_export_tool.settings_dialog import SettingsDialog
 
-        dialog = SettingsDialog(self._root, self._config.export_options)
+        dialog = SettingsDialog(self.winfo_toplevel(), self._config.export_options)
         if dialog.result is not None:
             self._config.export_options = dialog.result
             from inventor_export_tool.config import save_config
@@ -366,8 +371,8 @@ class ExportToolGUI:
         if self._last_log_path:
             os.startfile(self._last_log_path)
 
-    def _on_close(self) -> None:
+    def close(self) -> None:
+        """Called by the shell on window close."""
         self._save_config()
         if self._worker_thread and self._worker_thread.is_alive():
             self._cancel_event.set()
-        self._root.destroy()

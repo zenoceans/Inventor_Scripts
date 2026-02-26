@@ -85,7 +85,7 @@ class SettingsDialog(tk.Toplevel):
 
     def __init__(
         self,
-        parent: tk.Tk,
+        parent: tk.Misc,
         export_options: dict[str, dict[str, Any]],
     ) -> None:
         """Create the settings dialog.

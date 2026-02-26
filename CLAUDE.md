@@ -1,10 +1,11 @@
-# Inventor Batch Export Tool
+# Zabra-Cadabra
 
 ## Project Overview
 
-Two-package Python project:
-1. **`inventor_api/`** — Reusable, library-grade Pythonic wrapper around Autodesk Inventor 2026 COM API. Designed to be extractable as a standalone library.
-2. **`inventor_export_tool/`** — Tkinter desktop app that uses `inventor_api` to batch-export STEP/DWG/PDF from assemblies.
+Three-package Python project:
+1. **`zabra_cadabra/`** — Multi-tab Tkinter shell application ("Zabra-Cadabra"). Black-and-white themed with Zen logo. Each tool/script is a tab. Entry point for the .exe.
+2. **`inventor_api/`** — Reusable, library-grade Pythonic wrapper around Autodesk Inventor 2026 COM API. Designed to be extractable as a standalone library.
+3. **`inventor_export_tool/`** — Inventor batch-export tool (STEP/DWG/PDF). Its GUI (`ExportToolGUI`) is a `ttk.Frame` tab embedded in Zabra-Cadabra.
 
 See `ARCHITECTURE.md` for design, `COM-API-REFERENCE.md` for raw COM API, `Export_Plan.md` for task breakdown.
 
@@ -20,6 +21,14 @@ See `ARCHITECTURE.md` for design, `COM-API-REFERENCE.md` for raw COM API, `Expor
 ## Project Structure
 
 ```
+zabra_cadabra/                 # Shell application (entry point)
+  __init__.py
+  __main__.py                  # python -m zabra_cadabra
+  app.py                       # main() — loads configs, runs shell
+  shell.py                     # ZabraApp — Tk root, header, Notebook
+  theme.py                     # Black/white ttk.Style theme
+  tab_registry.py              # TabSpec + TABS list
+
 inventor_api/                  # Reusable Inventor COM wrapper
   __init__.py                  # Public exports
   application.py               # InventorApp — connect, lifecycle
@@ -31,11 +40,11 @@ inventor_api/                  # Reusable Inventor COM wrapper
   exceptions.py                # Custom exceptions
   _com_threading.py            # COM thread init helper
 
-inventor_export_tool/          # Application
+inventor_export_tool/          # Inventor Export tab
   __init__.py
-  __main__.py                  # Entry point
-  app.py                       # Init + launches GUI
-  gui.py                       # Tkinter GUI
+  __main__.py                  # Redirects to zabra_cadabra
+  app.py                       # Redirects to zabra_cadabra
+  gui.py                       # ExportToolGUI (ttk.Frame tab)
   models.py                    # ExportItem, ScanSummary, ExportResult
   naming.py                    # Filename composition, IDW finding
   config.py                    # JSON config persistence
@@ -78,9 +87,15 @@ tests/
 - No docstrings on private/internal functions unless non-obvious
 
 ### Architecture Boundary
+- **`zabra_cadabra`**: Shell only — owns Tk root, header, notebook, theme. No business logic.
 - **`inventor_api`**: Pythonic COM wrapper. Returns its own types. No imports from `inventor_export_tool`.
 - **`inventor_export_tool`**: App logic. Imports from `inventor_api`. Contains GUI, config, naming, orchestration.
-- **GUI** (`gui.py`): No direct COM or inventor_api calls — goes through `orchestrator.py` on background thread.
+- **GUI** (`gui.py`): `ttk.Frame` tab — no direct COM or inventor_api calls — goes through `orchestrator.py` on background thread.
+
+### Adding a New Tab
+1. Create your tool's `ttk.Frame` subclass (with `parent` and optional `config` args)
+2. Add a `TabSpec` entry in `zabra_cadabra/tab_registry.py`
+3. If it needs config, add a loader in `zabra_cadabra/app.py` and pass via `configs` dict
 
 ### API Documentation
 - All `inventor_api` public API documented in README.md
@@ -95,10 +110,12 @@ tests/
 
 ```bash
 uv sync                                # Install dependencies
-uv run python -m inventor_export_tool  # Run the app
+uv run python -m zabra_cadabra         # Run the app (Zabra-Cadabra)
+uv run python -m inventor_export_tool  # Run the app (legacy redirect)
 uv run pytest                          # Run all tests
 uv run pytest tests/inventor_api/      # Run inventor_api tests only
 uv run ruff check .                    # Lint
 uv run ruff format .                   # Format
 uv run ty check                        # Type check
+uv run python build.py                 # Build ZabraCadabra.exe
 ```
