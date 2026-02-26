@@ -1,0 +1,14 @@
+[project]
+name = "inventor-api"
+version = "0.1.0"
+description = "Pythonic wrapper around Autodesk Inventor COM API"
+requires-python = ">=3.10"
+dependencies = ["pywin32>=306"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["tests"]

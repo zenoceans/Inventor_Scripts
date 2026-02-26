@@ -1,9 +1,5 @@
 """Tests for inventor_api.traversal module."""
 
-import os
-import sys
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from conftest import (
     make_mock_assembly_com,
     make_mock_com_document,

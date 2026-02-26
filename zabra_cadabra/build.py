@@ -12,7 +12,7 @@ def build() -> None:
     """Build the ZabraCadabra executable."""
     PyInstaller.__main__.run(
         [
-            "zabra_cadabra/__main__.py",
+            "src/zabra_cadabra/__main__.py",
             "--name",
             "ZabraCadabra",
             "--windowed",
@@ -20,7 +20,7 @@ def build() -> None:
             "--clean",
             # Bundle logo asset
             "--add-data",
-            "Zen LOGO SMUSS.png;.",
+            "assets/Zen LOGO SMUSS.png;.",
             # pywin32 hidden imports
             "--hidden-import",
             "pythoncom",
@@ -63,7 +63,7 @@ def build() -> None:
     )
     # Copy usage guide into dist folder
     dist_dir = Path("dist/ZabraCadabra")
-    usage_guide = Path("usage_guide.txt")
+    usage_guide = Path("assets/usage_guide.txt")
     if usage_guide.exists():
         shutil.copy(usage_guide, dist_dir / "usage_guide.txt")
 

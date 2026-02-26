@@ -1,15 +1,16 @@
 [project]
-name = "zabra-cadabra"
+name = "inventor-scripts"
 version = "0.1.0"
-description = "Zabra-Cadabra — multi-tool automation suite for Autodesk Inventor"
+description = "Workspace root for Inventor automation tools"
 requires-python = ">=3.10"
-dependencies = [
-    "pywin32>=306",
-]
 
-[project.gui-scripts]
-zabra-cadabra = "zabra_cadabra.app:main"
-inventor-export-tool = "inventor_export_tool.app:main"
+[tool.uv.workspace]
+members = [
+    "inventor_api",
+    "inventor_export_tool",
+    "inventor_simplify_tool",
+    "zabra_cadabra",
+]
 
 [dependency-groups]
 dev = [
@@ -21,6 +22,3 @@ dev = [
 [tool.ruff]
 target-version = "py310"
 line-length = 99
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]

@@ -2,11 +2,11 @@
 
 
 a = Analysis(
-    ['zabra_cadabra\\__main__.py'],
+    ['src\\zabra_cadabra\\__main__.py'],
     pathex=[],
     binaries=[],
-    datas=[('Zen LOGO SMUSS.png', '.')],
-    hiddenimports=['pythoncom', 'pywintypes', 'win32com', 'win32com.client', 'win32api'],
+    datas=[('assets/Zen LOGO SMUSS.png', '.')],
+    hiddenimports=['pythoncom', 'pywintypes', 'win32com', 'win32com.client', 'win32api', 'win32gui', 'win32ui', 'win32con'],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

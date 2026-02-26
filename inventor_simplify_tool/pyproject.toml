@@ -1,0 +1,19 @@
+[project]
+name = "inventor-simplify-tool"
+version = "0.1.0"
+description = "STEP simplification tool for Inventor"
+requires-python = ">=3.10"
+dependencies = ["inventor-api"]
+
+[project.scripts]
+inventor-simplify = "inventor_simplify_tool.cli:main"
+
+[tool.uv.sources]
+inventor-api = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,13 +1,10 @@
 """Tests for inventor_api.exporters module."""
 
 import logging
-import os
-import sys
 from unittest.mock import MagicMock
 
 import pytest
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from conftest import make_mock_com_app, make_mock_com_document
 
 from inventor_api.application import InventorApp

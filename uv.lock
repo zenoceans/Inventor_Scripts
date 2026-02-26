@@ -2,6 +2,15 @@ version = 1
 revision = 3
 requires-python = ">=3.10"
 
+[manifest]
+members = [
+    "inventor-api",
+    "inventor-export-tool",
+    "inventor-scripts",
+    "inventor-simplify-tool",
+    "zabra-cadabra",
+]
+
 [[package]]
 name = "altgraph"
 version = "0.17.5"
@@ -40,6 +49,60 @@ sdist = { url = "https://files.pythonhosted.org/packages/72/34/14ca021ce8e5dfedc
 wheels = [
     { url = "https://files.pythonhosted.org/packages/cb/b1/3846dd7f199d53cb17f49cba7e651e9ce294d8497c8c150530ed11865bb8/iniconfig-2.3.0-py3-none-any.whl", hash = "sha256:f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12", size = 7484, upload-time = "2025-10-18T21:55:41.639Z" },
 ]
+
+[[package]]
+name = "inventor-api"
+version = "0.1.0"
+source = { editable = "inventor_api" }
+dependencies = [
+    { name = "pywin32" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "pywin32", specifier = ">=306" }]
+
+[[package]]
+name = "inventor-export-tool"
+version = "0.1.0"
+source = { editable = "inventor_export_tool" }
+dependencies = [
+    { name = "inventor-api" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "inventor-api", editable = "inventor_api" }]
+
+[[package]]
+name = "inventor-scripts"
+version = "0.1.0"
+source = { virtual = "." }
+
+[package.dev-dependencies]
+dev = [
+    { name = "pyinstaller" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pyinstaller", specifier = ">=6.0" },
+    { name = "pytest", specifier = ">=8.0" },
+    { name = "ruff", specifier = ">=0.8" },
+]
+
+[[package]]
+name = "inventor-simplify-tool"
+version = "0.1.0"
+source = { editable = "inventor_simplify_tool" }
+dependencies = [
+    { name = "inventor-api" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "inventor-api", editable = "inventor_api" }]
 
 [[package]]
 name = "macholib"
@@ -279,24 +342,14 @@ wheels = [
 [[package]]
 name = "zabra-cadabra"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "zabra_cadabra" }
 dependencies = [
-    { name = "pywin32" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pyinstaller" },
-    { name = "pytest" },
-    { name = "ruff" },
+    { name = "inventor-export-tool" },
+    { name = "inventor-simplify-tool" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pywin32", specifier = ">=306" }]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "pyinstaller", specifier = ">=6.0" },
-    { name = "pytest", specifier = ">=8.0" },
-    { name = "ruff", specifier = ">=0.8" },
+requires-dist = [
+    { name = "inventor-export-tool", editable = "inventor_export_tool" },
+    { name = "inventor-simplify-tool", editable = "inventor_simplify_tool" },
 ]

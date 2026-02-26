@@ -52,10 +52,10 @@ A multi-tab Windows desktop application for Autodesk Inventor 2026 automation. B
 
 ## Installation
 
-```
+```bash
 git clone <repo-url>
 cd Inventor_Scripts
-uv sync
+uv sync --all-packages
 ```
 
 ---
@@ -64,14 +64,10 @@ uv sync
 
 ### From source
 
-```
-uv run python -m zabra_cadabra
-```
-
-Or using the backward-compatible entry:
-
-```
-uv run python -m inventor_export_tool
+```bash
+uv run zabra-cadabra            # Full GUI (all tools)
+uv run inventor-export --help   # Export tool CLI
+uv run inventor-simplify --help # Simplify tool CLI
 ```
 
 ### From the `.exe`
@@ -168,75 +164,102 @@ There are no user-configurable options for DWG export — Inventor uses its buil
 
 ## Architecture
 
+This is a **uv workspace** with four packages. Each package has its own `pyproject.toml`, `src/` layout, and `tests/` directory.
+
 ```
 Inventor_Scripts/
-├── zabra_cadabra/                 # Shell application (multi-tab GUI host)
-│   ├── __init__.py
-│   ├── __main__.py                # Entry point: python -m zabra_cadabra
-│   ├── app.py                     # main() — load configs, create shell, mainloop
-│   ├── shell.py                   # ZabraApp — Tk root, header, Notebook, theme
-│   ├── theme.py                   # apply_bw_theme() — black/white ttk.Style
-│   └── tab_registry.py            # TabSpec + TABS list
+├── pyproject.toml                      # Workspace root — declares members
 │
-├── inventor_api/                  # Low-level COM wrapper (reusable library)
-│   ├── __init__.py                # Public re-exports
-│   ├── application.py             # InventorApp — connect, lifecycle
-│   ├── document.py                # InventorDocument, AssemblyDocument, ComponentOccurrence
-│   ├── properties.py              # iProperty access
-│   ├── traversal.py               # walk_assembly — recursive tree walk
-│   ├── exporters.py               # export_step, export_dwg, export_pdf, export_drawing
-│   ├── importer.py                # import_step — STEP file import
-│   ├── simplifier.py              # simplify_part, simplify_assembly, simplify_document
-│   ├── types.py                   # Enums, constants (DocumentType, Simplify enums)
-│   ├── exceptions.py              # InventorError hierarchy
-│   └── _com_threading.py          # com_thread_scope context manager
+├── inventor_api/                       # Package: inventor-api (standalone library)
+│   ├── pyproject.toml
+│   ├── src/inventor_api/
+│   │   ├── __init__.py                 # Public re-exports
+│   │   ├── application.py             # InventorApp — connect, lifecycle
+│   │   ├── document.py                # InventorDocument, AssemblyDocument, ComponentOccurrence
+│   │   ├── properties.py              # iProperty access
+│   │   ├── traversal.py               # walk_assembly — recursive tree walk
+│   │   ├── exporters.py               # export_step, export_dwg, export_pdf, export_drawing
+│   │   ├── importer.py                # import_step — STEP file import
+│   │   ├── simplifier.py              # simplify_part, simplify_assembly, simplify_document
+│   │   ├── types.py                   # Enums, constants (DocumentType, Simplify enums)
+│   │   ├── exceptions.py              # InventorError hierarchy
+│   │   └── _com_threading.py          # com_thread_scope context manager
+│   └── tests/
+│       ├── conftest.py
+│       ├── test_document.py
+│       ├── test_exporters.py
+│       ├── test_importer.py
+│       ├── test_simplifier.py
+│       ├── test_traversal.py
+│       └── test_types.py
 │
-├── inventor_export_tool/          # Inventor Export tab (GUI + orchestration)
-│   ├── __init__.py
-│   ├── __main__.py                # Entry point (redirects to zabra_cadabra)
-│   ├── app.py                     # Redirects to zabra_cadabra.app.main()
-│   ├── gui.py                     # ExportToolGUI (ttk.Frame tab)
-│   ├── models.py                  # ComponentInfo, ExportItem, ExportResult, ScanSummary
-│   ├── config.py                  # AppConfig, load_config, save_config
-│   ├── naming.py                  # Filename composition, IDW finding
-│   ├── export_log.py              # Export run logging
-│   ├── orchestrator.py            # Scan + export logic
-│   └── settings_dialog.py         # Advanced export settings dialog
+├── inventor_export_tool/               # Package: inventor-export-tool (CLI + GUI tab)
+│   ├── pyproject.toml                  # Declares script: inventor-export
+│   ├── src/inventor_export_tool/
+│   │   ├── cli.py                     # inventor-export entry point
+│   │   ├── gui.py                     # ExportToolGUI (ttk.Frame tab)
+│   │   ├── models.py                  # ComponentInfo, ExportItem, ExportResult, ScanSummary
+│   │   ├── config.py                  # AppConfig, load_config, save_config
+│   │   ├── naming.py                  # Filename composition, IDW finding
+│   │   ├── export_log.py              # Export run logging
+│   │   ├── orchestrator.py            # Scan + export logic
+│   │   └── settings_dialog.py         # Advanced export settings dialog
+│   └── tests/
+│       ├── test_config.py
+│       ├── test_export_log.py
+│       ├── test_models.py
+│       ├── test_naming.py
+│       └── test_settings_dialog.py
 │
-├── inventor_simplify_tool/        # STEP Simplify tab (GUI + orchestration)
-│   ├── __init__.py
-│   ├── gui.py                     # SimplifyToolGUI (ttk.Frame tab)
-│   ├── models.py                  # SimplifyRow, SimplifyResult, SimplifySummary
-│   ├── config.py                  # SimplifyConfig, load/save
-│   ├── orchestrator.py            # Batch simplify logic
-│   └── simplify_log.py            # Simplify run logging
+├── inventor_simplify_tool/             # Package: inventor-simplify-tool (CLI + GUI tab)
+│   ├── pyproject.toml                  # Declares script: inventor-simplify
+│   ├── src/inventor_simplify_tool/
+│   │   ├── cli.py                     # inventor-simplify entry point
+│   │   ├── gui.py                     # SimplifyToolGUI (ttk.Frame tab)
+│   │   ├── models.py                  # SimplifyRow, SimplifyResult, SimplifySummary
+│   │   ├── config.py                  # SimplifyConfig, load/save
+│   │   ├── orchestrator.py            # Batch simplify logic
+│   │   └── simplify_log.py            # Simplify run logging
+│   └── tests/
+│       ├── test_simplify_config.py
+│       ├── test_simplify_log.py
+│       └── test_simplify_models.py
 │
-└── tests/
-    ├── conftest.py                # Mock COM factories
-    ├── test_naming.py
-    ├── test_models.py
-    ├── test_config.py
-    ├── test_export_log.py
-    └── inventor_api/
-        ├── test_types.py
-        ├── test_document.py
-        ├── test_traversal.py
-        └── test_exporters.py
+└── zabra_cadabra/                      # Package: zabra-cadabra (GUI shell)
+    ├── pyproject.toml                  # Declares gui-script: zabra-cadabra
+    ├── build.py                        # PyInstaller build script
+    ├── src/zabra_cadabra/
+    │   ├── app.py                     # main() — load configs, create shell, mainloop
+    │   ├── shell.py                   # ZabraApp — Tk root, header, Notebook, theme
+    │   ├── theme.py                   # apply_bw_theme() — black/white ttk.Style
+    │   └── tab_registry.py            # TabSpec + TABS list
+    └── tests/
+```
+
+### Package dependencies
+
+```
+inventor-api          (no workspace deps)
+inventor-export-tool  -> inventor-api
+inventor-simplify-tool -> inventor-api
+zabra-cadabra         -> inventor-export-tool, inventor-simplify-tool
 ```
 
 ### Architecture boundaries
 
 - **`inventor_api`**: Pythonic COM wrapper. Returns its own types. No imports from application packages.
-- **`inventor_export_tool`**: Export tab logic. Imports from `inventor_api`.
-- **`inventor_simplify_tool`**: Simplify tab logic. Imports from `inventor_api`.
+- **`inventor_export_tool`**: Export tab logic. Imports from `inventor_api`. No dependency on `inventor_simplify_tool`.
+- **`inventor_simplify_tool`**: Simplify tab logic. Imports from `inventor_api`. No dependency on `inventor_export_tool`.
 - **`zabra_cadabra`**: Shell application. Imports tab factories from both tool packages.
 - **GUI** modules (`gui.py`): No direct COM or `inventor_api` calls — go through orchestrators on background threads.
 
 ### Adding a new tab
 
-1. Create a package `inventor_<tool_name>/` with `gui.py` exposing a `ttk.Frame` subclass with `start_polling()` and `close()` methods.
-2. Add a factory function and `TabSpec` entry in `zabra_cadabra/tab_registry.py`.
-3. If the tab needs persistent config, add loading/saving in `zabra_cadabra/app.py`.
+1. Create a new workspace package `inventor_<tool_name>/` with `src/`, `tests/`, and `pyproject.toml` declaring `inventor-api` as a dependency.
+2. Add a `gui.py` exposing a `ttk.Frame` subclass with `start_polling()` and `close()` methods.
+3. Add the package to `[tool.uv.workspace] members` in the root `pyproject.toml`.
+4. Add a factory function and `TabSpec` entry in `zabra_cadabra/src/zabra_cadabra/tab_registry.py`.
+5. Add the new package as a dependency in `zabra_cadabra/pyproject.toml`.
 
 ---
 
@@ -780,8 +803,8 @@ def save_simplify_config(config: SimplifyConfig, path: Path | None = None) -> No
 ## Building a Standalone Executable
 
 ```bash
-uv sync            # Install dependencies including PyInstaller
-uv run python build.py
+uv sync --all-packages     # Install dependencies including PyInstaller
+cd zabra_cadabra && uv run python build.py
 ```
 
 This produces a `dist/ZabraCadabra/` folder containing:
@@ -799,17 +822,23 @@ This produces a `dist/ZabraCadabra/` folder containing:
 # Clone and install
 git clone <repo-url>
 cd Inventor_Scripts
-uv sync
+uv sync --all-packages
 
 # Run the app
-uv run python -m zabra_cadabra
+uv run zabra-cadabra
 
-# Run tests
-uv run pytest
+# Run tests (per package)
+uv run --package inventor-api pytest
+uv run --package inventor-export-tool pytest
+uv run --package inventor-simplify-tool pytest
+uv run --package zabra-cadabra pytest
 
 # Lint and format
 uv run ruff check .
 uv run ruff format .
+
+# Type check
+uv run ty check
 ```
 
 ---

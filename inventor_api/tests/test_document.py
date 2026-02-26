@@ -1,10 +1,6 @@
 """Tests for inventor_api.document module."""
 
-import os
-import sys
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from conftest import make_mock_com_document, make_mock_com_occurrence, make_mock_assembly_com
+from conftest import make_mock_assembly_com, make_mock_com_document, make_mock_com_occurrence
 
 from inventor_api.document import AssemblyDocument, ComponentOccurrence, InventorDocument
 from inventor_api.types import DocumentType

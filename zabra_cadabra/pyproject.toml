@@ -1,0 +1,23 @@
+[project]
+name = "zabra-cadabra"
+version = "0.1.0"
+description = "Zabra-Cadabra — multi-tool automation suite for Autodesk Inventor"
+requires-python = ">=3.10"
+dependencies = [
+    "inventor-export-tool",
+    "inventor-simplify-tool",
+]
+
+[project.gui-scripts]
+zabra-cadabra = "zabra_cadabra.app:main"
+
+[tool.uv.sources]
+inventor-export-tool = { workspace = true }
+inventor-simplify-tool = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

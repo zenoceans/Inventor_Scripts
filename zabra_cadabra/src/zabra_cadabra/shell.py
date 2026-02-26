@@ -61,9 +61,11 @@ class ZabraApp:
     def _resolve_asset(self, filename: str) -> str | None:
         if getattr(sys, "frozen", False):
             base = Path(sys._MEIPASS)  # type: ignore[attr-defined]
+            p = base / filename
         else:
-            base = Path(__file__).resolve().parent.parent
-        p = base / filename
+            # __file__ is zabra_cadabra/src/zabra_cadabra/shell.py
+            # assets live at zabra_cadabra/assets/
+            p = Path(__file__).resolve().parent.parent.parent / "assets" / filename
         return str(p) if p.exists() else None
 
     def _load_logo(self) -> None:
