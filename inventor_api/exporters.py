@@ -177,12 +177,19 @@ def export_drawing(
 
     Only closes the IDW if it was not already open before this call.
 
+    For DWG format, uses ``Document.SaveAs`` (Inventor's native DWG support)
+    instead of the translator add-in.  The translator requires an ACAD INI
+    file and a fully rendered document — both problematic for batch automation.
+    ``SaveAs`` is simpler and works on invisibly-opened documents.
+
+    For PDF format, uses the translator add-in pipeline as before.
+
     Args:
         app: Connected InventorApp instance.
         idw_path: Path to the .idw file.
         output_path: Full path for the output file.
         fmt: Export format — "dwg" or "pdf".
-        options: Translator option overrides.
+        options: Translator option overrides (PDF only).
 
     Raises:
         DocumentOpenError: If the IDW file can't be opened.
@@ -192,7 +199,8 @@ def export_drawing(
     if fmt not in ("dwg", "pdf"):
         raise ValueError(f"Unsupported drawing export format: {fmt!r}")
 
-    translator_id = TranslatorId.DWG if fmt == "dwg" else TranslatorId.PDF
+    output_path = str(output_path)
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
     # Check if already open
     was_open = _is_document_open(app, idw_path)
@@ -204,16 +212,16 @@ def export_drawing(
         raise DocumentOpenError(idw_path, cause=e) from e
 
     try:
-        # The DWG translator needs an initialized view.  Invisible documents
-        # have no views, so we create one.  This avoids E_INVALIDARG without
-        # making the document visible (which triggers Vault checkout dialogs).
-        try:
-            if not drawing.com_object.Views.Count:
-                drawing.com_object.Views.Add()
-        except Exception:
-            pass
-
-        _do_export(app, drawing, output_path, translator_id, option_overrides=options)
+        if fmt == "dwg":
+            # Native SaveAs — Inventor can save drawings directly as DWG.
+            # Second arg True = save a copy (don't change the document's name).
+            try:
+                drawing.com_object.SaveAs(output_path, True)
+            except Exception as e:
+                raise ExportError(path=idw_path, format="DWG", cause=e) from e
+        else:
+            # PDF uses the translator add-in (works fine on invisible docs).
+            _do_export(app, drawing, output_path, TranslatorId.PDF, option_overrides=options)
     finally:
         if not was_open:
             try:
