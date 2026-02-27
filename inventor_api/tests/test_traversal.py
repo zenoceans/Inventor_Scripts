@@ -149,3 +149,138 @@ class TestWalkAssembly:
         result = walk_assembly(asm)
         assert result[0].is_top_level is True
         assert result[1].is_top_level is False
+
+
+class TestWalkAssemblyDepthField:
+    def test_top_level_depth_is_zero(self):
+        asm_com = make_mock_assembly_com(occurrences=[])
+        asm = AssemblyDocument(asm_com)
+        result = walk_assembly(asm)
+        assert result[0].depth == 0
+
+    def test_direct_children_depth_is_one(self):
+        part = make_mock_com_document(full_filename=r"C:\Projects\Part.ipt")
+        occ = make_mock_com_occurrence(document=part)
+        asm_com = make_mock_assembly_com(occurrences=[occ])
+        asm = AssemblyDocument(asm_com)
+
+        result = walk_assembly(asm)
+        child = next(c for c in result if not c.is_top_level)
+        assert child.depth == 1
+
+    def test_nested_depth_two(self):
+        part = make_mock_com_document(full_filename=r"C:\Projects\DeepPart.ipt")
+        part_occ = make_mock_com_occurrence(document=part)
+        sub_asm_com = make_mock_assembly_com(
+            full_filename=r"C:\Projects\SubAsm.iam",
+            occurrences=[part_occ],
+        )
+        sub_occ = make_mock_com_occurrence(document=sub_asm_com, doc_type=DocumentType.ASSEMBLY)
+        top_asm_com = make_mock_assembly_com(
+            full_filename=r"C:\Projects\TopAsm.iam",
+            occurrences=[sub_occ],
+        )
+        top = AssemblyDocument(top_asm_com)
+
+        result = walk_assembly(top)
+        by_name = {c.document.display_name: c for c in result}
+        assert by_name["TopAsm"].depth == 0
+        assert by_name["SubAsm"].depth == 1
+        assert by_name["DeepPart"].depth == 2
+
+
+class TestWalkAssemblyMaxDepth:
+    def _build_three_level_assembly(self):
+        """Build: TopAsm (depth 0) -> SubAsm (depth 1) -> DeepPart (depth 2)."""
+        part = make_mock_com_document(full_filename=r"C:\Projects\DeepPart.ipt")
+        part_occ = make_mock_com_occurrence(document=part)
+        sub_asm_com = make_mock_assembly_com(
+            full_filename=r"C:\Projects\SubAsm.iam",
+            occurrences=[part_occ],
+        )
+        sub_occ = make_mock_com_occurrence(document=sub_asm_com, doc_type=DocumentType.ASSEMBLY)
+        top_asm_com = make_mock_assembly_com(
+            full_filename=r"C:\Projects\TopAsm.iam",
+            occurrences=[sub_occ],
+        )
+        return AssemblyDocument(top_asm_com)
+
+    def test_max_depth_none_unlimited(self):
+        top = self._build_three_level_assembly()
+        result = walk_assembly(top, max_depth=None)
+        names = [c.document.display_name for c in result]
+        assert "TopAsm" in names
+        assert "SubAsm" in names
+        assert "DeepPart" in names
+
+    def test_max_depth_1_only_direct_children(self):
+        top = self._build_three_level_assembly()
+        result = walk_assembly(top, max_depth=1)
+        names = [c.document.display_name for c in result]
+        assert "TopAsm" in names
+        assert "SubAsm" in names
+        assert "DeepPart" not in names
+
+    def test_max_depth_2_two_levels(self):
+        top = self._build_three_level_assembly()
+        result = walk_assembly(top, max_depth=2)
+        names = [c.document.display_name for c in result]
+        assert "TopAsm" in names
+        assert "SubAsm" in names
+        assert "DeepPart" in names
+
+    def test_max_depth_0_top_level_only(self):
+        top = self._build_three_level_assembly()
+        result = walk_assembly(top, max_depth=0)
+        # max_depth=0: first call has current_depth=1 > 0, so no children added
+        assert len(result) == 1
+        assert result[0].is_top_level
+
+
+class TestWalkAssemblyTypeFilters:
+    def _build_mixed_assembly(self):
+        """Build: TopAsm -> SubAsm -> Part, Part2 at top level."""
+        part = make_mock_com_document(full_filename=r"C:\Projects\DeepPart.ipt")
+        part_occ = make_mock_com_occurrence(document=part)
+        sub_asm_com = make_mock_assembly_com(
+            full_filename=r"C:\Projects\SubAsm.iam",
+            occurrences=[part_occ],
+        )
+        sub_occ = make_mock_com_occurrence(document=sub_asm_com, doc_type=DocumentType.ASSEMBLY)
+        part2 = make_mock_com_document(full_filename=r"C:\Projects\TopPart.ipt")
+        part2_occ = make_mock_com_occurrence(document=part2)
+        top_asm_com = make_mock_assembly_com(
+            full_filename=r"C:\Projects\TopAsm.iam",
+            occurrences=[sub_occ, part2_occ],
+        )
+        return AssemblyDocument(top_asm_com)
+
+    def test_include_parts_false_excludes_parts(self):
+        top = self._build_mixed_assembly()
+        result = walk_assembly(top, include_parts=False)
+        names = [c.document.display_name for c in result]
+        assert "TopAsm" in names
+        assert "SubAsm" in names
+        assert "DeepPart" not in names
+        assert "TopPart" not in names
+
+    def test_include_assemblies_false_excludes_sub_assemblies_but_not_their_parts(self):
+        top = self._build_mixed_assembly()
+        result = walk_assembly(top, include_assemblies=False)
+        names = [c.document.display_name for c in result]
+        # Top-level assembly is always in results as is_top_level
+        assert "TopAsm" in names
+        # Sub-assembly itself should NOT appear
+        assert "SubAsm" not in names
+        # But the part inside the sub-assembly SHOULD appear (traversal continues)
+        assert "DeepPart" in names
+        assert "TopPart" in names
+
+    def test_include_parts_true_and_assemblies_true_default(self):
+        top = self._build_mixed_assembly()
+        result = walk_assembly(top)
+        names = [c.document.display_name for c in result]
+        assert "TopAsm" in names
+        assert "SubAsm" in names
+        assert "DeepPart" in names
+        assert "TopPart" in names

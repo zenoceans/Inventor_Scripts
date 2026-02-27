@@ -2,11 +2,13 @@
 
 ## Project Overview
 
-Four-package uv workspace Python project:
+Six-package uv workspace Python project:
 1. **`zabra_cadabra/`** — Multi-tab Tkinter shell application ("Zabra-Cadabra"). Black-and-white themed with Zen logo. Each tool/script is a tab. Entry point for the .exe.
 2. **`inventor_api/`** — Reusable, library-grade Pythonic wrapper around Autodesk Inventor 2026 COM API. Designed to be extractable as a standalone library.
 3. **`inventor_export_tool/`** — Inventor batch-export tool (STEP/DWG/PDF). CLI-standalone via `inventor-export`. Its GUI (`ExportToolGUI`) is a `ttk.Frame` tab embedded in Zabra-Cadabra.
 4. **`inventor_simplify_tool/`** — Inventor simplify/shrinkwrap tool. CLI-standalone via `inventor-simplify`. Its GUI is a `ttk.Frame` tab embedded in Zabra-Cadabra.
+5. **`inventor_drawing_tool/`** — Inventor batch drawing creation and revision release tool. CLI-standalone via `inventor-drawing`. Its GUI (`DrawingToolGUI`) is a `ttk.Frame` tab embedded in Zabra-Cadabra.
+6. **`inventor_utils/`** — Shared utilities (filenames, config helpers, base logger, base orchestrator) used across tool packages.
 
 See `ARCHITECTURE.md` for design, `COM-API-REFERENCE.md` for raw COM API, `Export_Plan.md` for task breakdown.
 
@@ -75,6 +77,37 @@ inventor_simplify_tool/                # Inventor Simplify tool
   tests/
     ...
 
+inventor_drawing_tool/                 # Inventor Drawing Release tool
+  pyproject.toml
+  src/inventor_drawing_tool/
+    __init__.py
+    __main__.py                        # Calls cli.main()
+    cli.py                             # argparse CLI entry point
+    gui.py                             # DrawingToolGUI (ttk.Frame tab)
+    settings_dialog.py                 # Advanced settings modal
+    models.py                          # DrawingItem, RevisionData, ScanResult
+    config.py                          # JSON config persistence
+    scanner.py                         # Assembly scanning for drawings
+    orchestrator.py                    # Scan + create + revision logic
+    release_log.py                     # Release logging
+  tests/
+    conftest.py
+    test_models.py
+    test_config.py
+    test_scanner.py
+
+inventor_utils/                        # Shared utilities
+  pyproject.toml
+  src/inventor_utils/
+    __init__.py
+    filenames.py                       # sanitize_filename, find_idw_path, etc.
+    config.py                          # Generic config load/save helpers
+    base_logger.py                     # ToolLogger abstract base
+    base_orchestrator.py               # BaseOrchestrator with callbacks
+  tests/
+    test_filenames.py
+    test_config.py
+
 zabra_cadabra/                         # Shell application (entry point)
   pyproject.toml
   build.py                             # PyInstaller build script
@@ -125,6 +158,8 @@ zabra_cadabra/                         # Shell application (entry point)
 - **`inventor_api`**: Pythonic COM wrapper. Returns its own types. No imports from tool packages.
 - **`inventor_export_tool`**: App logic. Imports from `inventor_api`. Contains GUI, config, naming, orchestration, CLI.
 - **`inventor_simplify_tool`**: App logic. Imports from `inventor_api`. Contains GUI, config, orchestration, CLI.
+- **`inventor_drawing_tool`**: App logic. Imports from `inventor_api` and `inventor_utils`. Contains GUI, config, scanner, orchestration, CLI.
+- **`inventor_utils`**: Shared pure-Python utilities. No GUI, no COM, no inventor_api imports.
 - **GUI** (`gui.py` in each tool): `ttk.Frame` tab — no direct COM or inventor_api calls — goes through `orchestrator.py` on background thread.
 - **CLI** (`cli.py` in each tool): argparse entry point for standalone use. `__main__.py` calls `cli.main()`.
 
@@ -153,9 +188,12 @@ uv sync --all-packages                          # Install all workspace packages
 uv run zabra-cadabra                            # Run the full GUI app
 uv run inventor-export --help                   # Run export tool CLI standalone
 uv run inventor-simplify --help                 # Run simplify tool CLI standalone
+uv run inventor-drawing --help                 # Run drawing tool CLI standalone
 uv run --package inventor-api pytest            # Test inventor_api
 uv run --package inventor-export-tool pytest    # Test inventor_export_tool
 uv run --package inventor-simplify-tool pytest  # Test inventor_simplify_tool
+uv run --package inventor-drawing-tool pytest  # Test inventor_drawing_tool
+uv run --package inventor-utils pytest         # Test inventor_utils
 uv run --package zabra-cadabra pytest           # Test zabra_cadabra
 uv run ruff check .                             # Lint all packages
 uv run ruff format .                            # Format all packages

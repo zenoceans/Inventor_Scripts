@@ -5,9 +5,11 @@ requires-python = ">=3.10"
 [manifest]
 members = [
     "inventor-api",
+    "inventor-drawing-tool",
     "inventor-export-tool",
     "inventor-scripts",
     "inventor-simplify-tool",
+    "inventor-utils",
     "zabra-cadabra",
 ]
 
@@ -62,15 +64,34 @@ dependencies = [
 requires-dist = [{ name = "pywin32", specifier = ">=306" }]
 
 [[package]]
+name = "inventor-drawing-tool"
+version = "0.1.0"
+source = { editable = "inventor_drawing_tool" }
+dependencies = [
+    { name = "inventor-api" },
+    { name = "inventor-utils" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "inventor-api", editable = "inventor_api" },
+    { name = "inventor-utils", editable = "inventor_utils" },
+]
+
+[[package]]
 name = "inventor-export-tool"
 version = "0.1.0"
 source = { editable = "inventor_export_tool" }
 dependencies = [
     { name = "inventor-api" },
+    { name = "inventor-utils" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "inventor-api", editable = "inventor_api" }]
+requires-dist = [
+    { name = "inventor-api", editable = "inventor_api" },
+    { name = "inventor-utils", editable = "inventor_utils" },
+]
 
 [[package]]
 name = "inventor-scripts"
@@ -99,10 +120,19 @@ version = "0.1.0"
 source = { editable = "inventor_simplify_tool" }
 dependencies = [
     { name = "inventor-api" },
+    { name = "inventor-utils" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "inventor-api", editable = "inventor_api" }]
+requires-dist = [
+    { name = "inventor-api", editable = "inventor_api" },
+    { name = "inventor-utils", editable = "inventor_utils" },
+]
+
+[[package]]
+name = "inventor-utils"
+version = "0.1.0"
+source = { editable = "inventor_utils" }
 
 [[package]]
 name = "macholib"
@@ -344,12 +374,14 @@ name = "zabra-cadabra"
 version = "0.1.0"
 source = { editable = "zabra_cadabra" }
 dependencies = [
+    { name = "inventor-drawing-tool" },
     { name = "inventor-export-tool" },
     { name = "inventor-simplify-tool" },
 ]
 
 [package.metadata]
 requires-dist = [
+    { name = "inventor-drawing-tool", editable = "inventor_drawing_tool" },
     { name = "inventor-export-tool", editable = "inventor_export_tool" },
     { name = "inventor-simplify-tool", editable = "inventor_simplify_tool" },
 ]

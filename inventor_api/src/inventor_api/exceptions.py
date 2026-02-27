@@ -101,3 +101,19 @@ class SaveAsError(InventorError):
         if cause:
             msg += f" ({_format_cause(cause)})"
         super().__init__(msg)
+
+
+class DrawingError(InventorError):
+    """Failed to create or modify a drawing document."""
+
+    def __init__(self, path: str, cause: Exception | None = None) -> None:
+        self.path = path
+        self.cause = cause
+        msg = f"Drawing operation failed: {path}"
+        if cause:
+            msg += f" ({_format_cause(cause)})"
+        super().__init__(msg)
+
+
+class DrawingCreationError(DrawingError):
+    """Failed to create a new drawing from template."""

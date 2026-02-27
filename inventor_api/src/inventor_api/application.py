@@ -13,7 +13,7 @@ from inventor_api.exceptions import (
 from inventor_api.types import DocumentType
 
 if TYPE_CHECKING:
-    pass
+    from inventor_api.drawing import DrawingDocument
 
 
 class InventorApp:
@@ -79,7 +79,8 @@ class InventorApp:
     def active_document(self) -> InventorDocument:
         """Get the currently active document.
 
-        Returns an AssemblyDocument if the active doc is an assembly.
+        Returns an AssemblyDocument if the active doc is an assembly,
+        or a DrawingDocument if it is a drawing.
 
         Raises:
             InventorError: If no document is open.
@@ -96,6 +97,10 @@ class InventorApp:
         doc_type = int(doc.DocumentType)
         if doc_type == DocumentType.ASSEMBLY:
             return AssemblyDocument(doc)
+        if doc_type == DocumentType.DRAWING:
+            from inventor_api.drawing import DrawingDocument
+
+            return DrawingDocument(doc)
         return InventorDocument(doc)
 
     def get_active_assembly(self) -> AssemblyDocument:
@@ -135,7 +140,32 @@ class InventorApp:
         doc_type = int(com_doc.DocumentType)
         if doc_type == DocumentType.ASSEMBLY:
             return AssemblyDocument(com_doc)
+        if doc_type == DocumentType.DRAWING:
+            from inventor_api.drawing import DrawingDocument
+
+            return DrawingDocument(com_doc)
         return InventorDocument(com_doc)
+
+    def create_drawing(self, template_path: str) -> "DrawingDocument":
+        """Create a new drawing document from a template.
+
+        Args:
+            template_path: Full path to the .idw template file.
+
+        Returns:
+            A DrawingDocument wrapping the newly created document.
+
+        Raises:
+            DrawingCreationError: If creation fails.
+        """
+        from inventor_api.drawing import DrawingDocument
+        from inventor_api.exceptions import DrawingCreationError
+
+        try:
+            com_doc = self._com.Documents.Add(DocumentType.DRAWING, template_path, True)
+            return DrawingDocument(com_doc)
+        except Exception as e:
+            raise DrawingCreationError(template_path, cause=e) from e
 
     def __repr__(self) -> str:
         return "InventorApp(connected)"

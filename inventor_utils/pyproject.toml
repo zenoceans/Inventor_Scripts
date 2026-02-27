@@ -1,0 +1,13 @@
+[project]
+name = "inventor-utils"
+version = "0.1.0"
+description = "Shared utilities for Inventor tool packages"
+requires-python = ">=3.10"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

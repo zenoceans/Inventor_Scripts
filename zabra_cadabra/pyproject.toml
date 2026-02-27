@@ -6,6 +6,7 @@ requires-python = ">=3.10"
 dependencies = [
     "inventor-export-tool",
     "inventor-simplify-tool",
+    "inventor-drawing-tool",
 ]
 
 [project.gui-scripts]
@@ -14,6 +15,7 @@ zabra-cadabra = "zabra_cadabra.app:main"
 [tool.uv.sources]
 inventor-export-tool = { workspace = true }
 inventor-simplify-tool = { workspace = true }
+inventor-drawing-tool = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

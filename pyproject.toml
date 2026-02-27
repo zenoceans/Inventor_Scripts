@@ -7,8 +7,10 @@ requires-python = ">=3.10"
 [tool.uv.workspace]
 members = [
     "inventor_api",
+    "inventor_utils",
     "inventor_export_tool",
     "inventor_simplify_tool",
+    "inventor_drawing_tool",
     "zabra_cadabra",
 ]
 

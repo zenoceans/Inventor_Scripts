@@ -15,8 +15,11 @@ Example::
 
 from inventor_api.application import InventorApp
 from inventor_api.document import AssemblyDocument, ComponentOccurrence, InventorDocument
+from inventor_api.drawing import DrawingDocument, RevisionRowData
 from inventor_api.exceptions import (
     DocumentOpenError,
+    DrawingCreationError,
+    DrawingError,
     ExportError,
     InventorError,
     InventorNotAssemblyError,
@@ -45,6 +48,8 @@ __all__ = [
     "InventorDocument",
     "AssemblyDocument",
     "ComponentOccurrence",
+    "DrawingDocument",
+    "RevisionRowData",
     "DiscoveredComponent",
     "walk_assembly",
     "DocumentType",
@@ -56,6 +61,8 @@ __all__ = [
     "DocumentOpenError",
     "ExportError",
     "TranslatorError",
+    "DrawingError",
+    "DrawingCreationError",
     "StepImportError",
     "SimplifyError",
     "SaveAsError",

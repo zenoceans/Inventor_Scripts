@@ -1,12 +1,12 @@
 [project]
-name = "inventor-simplify-tool"
+name = "inventor-drawing-tool"
 version = "0.1.0"
-description = "STEP simplification tool for Inventor"
+description = "Batch drawing creation and revision release tool for Inventor"
 requires-python = ">=3.10"
 dependencies = ["inventor-api", "inventor-utils"]
 
 [project.scripts]
-inventor-simplify = "inventor_simplify_tool.cli:main"
+inventor-drawing = "inventor_drawing_tool.cli:main"
 
 [tool.uv.sources]
 inventor-api = { workspace = true }

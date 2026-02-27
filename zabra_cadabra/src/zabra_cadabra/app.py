@@ -10,6 +10,7 @@ def main() -> None:
         print("Zabra-Cadabra requires Windows.")
         sys.exit(1)
 
+    from inventor_drawing_tool.config import load_drawing_config, save_drawing_config
     from inventor_export_tool.config import load_config, save_config
     from inventor_simplify_tool.config import load_simplify_config, save_simplify_config
     from zabra_cadabra.shell import ZabraApp
@@ -24,6 +25,7 @@ def main() -> None:
 
     inventor_config = load_config()
     simplify_config = load_simplify_config()
+    drawing_config = load_drawing_config()
     tel_config = load_telemetry_config()
 
     # Telemetry init
@@ -38,7 +40,11 @@ def main() -> None:
         log_event("zabra.app", "app_start", **session.as_dict())
 
     app = ZabraApp(
-        configs={"inventor_export": inventor_config, "inventor_simplify": simplify_config},
+        configs={
+            "inventor_export": inventor_config,
+            "inventor_simplify": simplify_config,
+            "inventor_drawing": drawing_config,
+        },
         session=session,
         telemetry_config=tel_config,
         log_file=log_file,
@@ -55,4 +61,5 @@ def main() -> None:
             transport.stop()
         save_config(inventor_config)
         save_simplify_config(simplify_config)
+        save_drawing_config(drawing_config)
         save_telemetry_config(tel_config)

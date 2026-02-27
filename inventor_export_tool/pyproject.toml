@@ -3,13 +3,14 @@ name = "inventor-export-tool"
 version = "0.1.0"
 description = "Batch export tool for Inventor (STEP/DWG/PDF)"
 requires-python = ">=3.10"
-dependencies = ["inventor-api"]
+dependencies = ["inventor-api", "inventor-utils"]
 
 [project.scripts]
 inventor-export = "inventor_export_tool.cli:main"
 
 [tool.uv.sources]
 inventor-api = { workspace = true }
+inventor-utils = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]
