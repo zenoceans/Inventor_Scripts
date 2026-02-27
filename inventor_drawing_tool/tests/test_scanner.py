@@ -8,7 +8,7 @@ from inventor_api.document import AssemblyDocument, InventorDocument
 from inventor_api.traversal import DiscoveredComponent
 from inventor_drawing_tool.config import DrawingConfig
 from inventor_drawing_tool.models import DrawingStatus
-from inventor_drawing_tool.scanner import scan_assembly_for_release
+from inventor_drawing_tool.scanner import scan_assembly_for_creation
 
 
 def _make_config(**overrides) -> DrawingConfig:
@@ -39,7 +39,7 @@ def _make_app(assembly_path: str = r"C:\Projects\Assembly.iam") -> MagicMock:
     return app
 
 
-class TestScanAssemblyForRelease:
+class TestScanAssemblyForCreation:
     def test_basic_scan(self, tmp_path):
         """ScanResult totals reflect the discovered components."""
         part1 = str(tmp_path / "Bracket.ipt")
@@ -54,7 +54,7 @@ class TestScanAssemblyForRelease:
         ]
 
         with patch("inventor_drawing_tool.scanner.walk_assembly", return_value=comps):
-            result = scan_assembly_for_release(app, _make_config())
+            result = scan_assembly_for_creation(app, _make_config())
 
         assert result.total_parts == 2
         assert result.parts_with_drawings == 1
@@ -78,7 +78,7 @@ class TestScanAssemblyForRelease:
 
         with patch("inventor_drawing_tool.scanner.walk_assembly", return_value=comps):
             with patch("inventor_drawing_tool.scanner.find_idw_path", return_value=None):
-                result = scan_assembly_for_release(app, _make_config())
+                result = scan_assembly_for_creation(app, _make_config())
 
         # Only 1 item — the top-level was skipped
         assert result.total_parts == 1
@@ -97,7 +97,7 @@ class TestScanAssemblyForRelease:
         ]
 
         with patch("inventor_drawing_tool.scanner.walk_assembly", return_value=comps):
-            result = scan_assembly_for_release(app, _make_config())
+            result = scan_assembly_for_creation(app, _make_config())
 
         assert result.items[0].drawing_status == DrawingStatus.EXISTING
         assert result.items[0].drawing_path == str(idw)
@@ -113,7 +113,7 @@ class TestScanAssemblyForRelease:
         ]
 
         with patch("inventor_drawing_tool.scanner.walk_assembly", return_value=comps):
-            result = scan_assembly_for_release(app, _make_config())
+            result = scan_assembly_for_creation(app, _make_config())
 
         assert result.items[0].drawing_status == DrawingStatus.NEEDS_CREATION
         assert result.items[0].drawing_path is None
@@ -131,7 +131,7 @@ class TestScanAssemblyForRelease:
 
         with patch("inventor_drawing_tool.scanner.walk_assembly", return_value=comps):
             with patch("inventor_drawing_tool.scanner.find_idw_path", return_value=None):
-                result = scan_assembly_for_release(app, _make_config())
+                result = scan_assembly_for_creation(app, _make_config())
 
         assert result.items[0].document_type == "assembly"
         assert result.items[1].document_type == "part"
@@ -147,7 +147,7 @@ class TestScanAssemblyForRelease:
 
         with patch("inventor_drawing_tool.scanner.walk_assembly", return_value=comps):
             with patch("inventor_drawing_tool.scanner.find_idw_path", return_value=None):
-                result = scan_assembly_for_release(app, _make_config())
+                result = scan_assembly_for_creation(app, _make_config())
 
         assert result.items[0].depth == 3
 
@@ -163,7 +163,7 @@ class TestScanAssemblyForRelease:
         app = _make_app()
 
         with patch("inventor_drawing_tool.scanner.walk_assembly", return_value=[]) as mock_walk:
-            scan_assembly_for_release(app, config)
+            scan_assembly_for_creation(app, config)
 
         mock_walk.assert_called_once_with(
             app.get_active_assembly.return_value,

@@ -1,4 +1,4 @@
-"""Data models for the drawing release tool."""
+"""Data models for the drawing creation tool."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ class DrawingStatus(str, Enum):
 
 @dataclass
 class DrawingItem:
-    """One part/assembly and its associated drawing for the release batch."""
+    """One part/assembly and its associated drawing for the creation batch."""
 
     part_path: str
     part_name: str
@@ -23,7 +23,7 @@ class DrawingItem:
     drawing_status: DrawingStatus
     document_type: str  # "part" or "assembly"
     depth: int
-    include_in_release: bool = True
+    include: bool = True
 
 
 @dataclass
@@ -38,7 +38,7 @@ class RevisionData:
 
 @dataclass
 class ScanResult:
-    """Result of scanning an assembly for drawing release candidates."""
+    """Result of scanning an assembly for drawing creation candidates."""
 
     assembly_path: str
     items: list[DrawingItem] = field(default_factory=list)
@@ -50,8 +50,8 @@ class ScanResult:
 
 
 @dataclass
-class ReleaseItemResult:
-    """Result of processing one drawing in the release."""
+class CreationItemResult:
+    """Result of processing one drawing."""
 
     item: DrawingItem
     success: bool
@@ -61,11 +61,11 @@ class ReleaseItemResult:
 
 
 @dataclass
-class ReleaseSummary:
-    """Summary of the complete release batch."""
+class CreationSummary:
+    """Summary of the complete creation batch."""
 
     total: int = 0
     created: int = 0
     revised: int = 0
     failed: int = 0
-    results: list[ReleaseItemResult] = field(default_factory=list)
+    results: list[CreationItemResult] = field(default_factory=list)

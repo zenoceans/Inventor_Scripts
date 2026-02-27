@@ -18,7 +18,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger("zabra.drawing")
 
 
-def scan_assembly_for_release(
+def scan_assembly_for_creation(
     app: "InventorApp",
     config: "DrawingConfig",
 ) -> ScanResult:
@@ -89,4 +89,4 @@ def scan_assembly_for_release(
     )
 
 
-__all__ = ["scan_assembly_for_release"]
+__all__ = ["scan_assembly_for_creation"]

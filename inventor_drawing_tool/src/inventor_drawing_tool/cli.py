@@ -1,4 +1,4 @@
-"""CLI entry point for the drawing release tool."""
+"""CLI entry point for the drawing creation tool."""
 
 from __future__ import annotations
 
@@ -10,14 +10,14 @@ from inventor_api._com_threading import com_thread_scope
 
 from inventor_drawing_tool.config import load_drawing_config
 from inventor_drawing_tool.models import DrawingStatus, RevisionData
-from inventor_drawing_tool.orchestrator import DrawingReleaseOrchestrator
+from inventor_drawing_tool.orchestrator import DrawingCreationOrchestrator
 
 
 def main() -> None:
-    """Run the drawing release tool from the command line."""
+    """Run the drawing creation tool from the command line."""
     parser = argparse.ArgumentParser(
         prog="inventor-drawing",
-        description="Batch drawing creation and revision release for Inventor assemblies.",
+        description="Batch drawing creation for Inventor assemblies.",
     )
 
     # Required revision arguments
@@ -119,7 +119,7 @@ def main() -> None:
             print(f"  [{current}/{total}] {pct}%", end="\r")
 
     with com_thread_scope():
-        orchestrator = DrawingReleaseOrchestrator(
+        orchestrator = DrawingCreationOrchestrator(
             config=config,
             revision_data=revision_data,
             progress_callback=progress_callback,
@@ -162,7 +162,7 @@ def main() -> None:
             )
 
         # Confirm
-        answer = input("Proceed with release? [y/N] ").strip().lower()
+        answer = input("Proceed? [y/N] ").strip().lower()
         if answer not in ("y", "yes"):
             print("Aborted.")
             sys.exit(0)
@@ -172,7 +172,7 @@ def main() -> None:
         summary = orchestrator.execute(scan_result.items, cancel_event=Event())
         print()
         print(
-            f"Release complete: {summary.created} created, "
+            f"Complete: {summary.created} created, "
             f"{summary.revised} revised, {summary.failed} failed"
         )
 

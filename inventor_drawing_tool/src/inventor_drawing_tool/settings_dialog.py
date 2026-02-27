@@ -1,4 +1,4 @@
-"""Modal dialog for configuring drawing release settings."""
+"""Modal dialog for configuring drawing creation settings."""
 
 from __future__ import annotations
 
@@ -38,11 +38,11 @@ def _label_to_depth(label: str, custom_value: int) -> int | None:
 
 
 class DrawingSettingsDialog(tk.Toplevel):
-    """Modal settings dialog for the drawing release tool."""
+    """Modal settings dialog for the drawing creation tool."""
 
     def __init__(self, parent: tk.Misc, config: "DrawingConfig") -> None:
         super().__init__(parent)
-        self.title("Drawing Release Settings")
+        self.title("Drawing Creation Settings")
         self.resizable(False, False)
         self._config = config
         self._result: DrawingConfig | None = None

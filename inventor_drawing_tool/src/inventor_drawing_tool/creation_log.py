@@ -1,4 +1,4 @@
-"""Structured release log for drawing creation and revision operations."""
+"""Structured creation log for drawing creation and revision operations."""
 
 from __future__ import annotations
 
@@ -12,8 +12,8 @@ from inventor_utils.error_hints import error_hint
 if TYPE_CHECKING:
     from inventor_drawing_tool.config import DrawingConfig
     from inventor_drawing_tool.models import (
-        ReleaseItemResult,
-        ReleaseSummary,
+        CreationItemResult,
+        CreationSummary,
         RevisionData,
         ScanResult,
     )
@@ -22,11 +22,11 @@ _SEPARATOR = "=" * 60
 _THIN_SEPARATOR = "-" * 60
 
 
-class ReleaseLogger(ToolLogger):
-    """Structured log file for drawing release operations."""
+class CreationLogger(ToolLogger):
+    """Structured log file for drawing creation operations."""
 
     def __init__(self, output_folder: str | Path) -> None:
-        super().__init__(output_folder, prefix="release_log")
+        super().__init__(output_folder, prefix="creation_log")
 
     def log_start(
         self,
@@ -34,9 +34,9 @@ class ReleaseLogger(ToolLogger):
         revision_data: "RevisionData",
         config: "DrawingConfig",
     ) -> None:
-        """Log the release configuration, scan results, and revision data."""
+        """Log the creation configuration, scan results, and revision data."""
         self._write(_SEPARATOR)
-        self._write("INVENTOR DRAWING RELEASE LOG")
+        self._write("INVENTOR DRAWING CREATION LOG")
         self._write(_SEPARATOR)
         self._write(f"Date:     {datetime.datetime.now().isoformat()}")
         self._write(f"Assembly: {scan_result.assembly_path}")
@@ -73,10 +73,10 @@ class ReleaseLogger(ToolLogger):
                 self._write(f"    - {w}")
         self._write(_SEPARATOR)
         self._write("")
-        self._write("RELEASE")
+        self._write("PROCESSING")
         self._write(_THIN_SEPARATOR)
 
-    def log_item(self, result: "ReleaseItemResult") -> None:
+    def log_item(self, result: "CreationItemResult") -> None:
         """Log the result of processing one drawing."""
         status = "OK" if result.success else "FAILED"
         self._write(f"[{status}] {result.item.part_name:40s} ({result.duration_seconds:.1f}s)")
@@ -89,7 +89,7 @@ class ReleaseLogger(ToolLogger):
             self._write(f"         Hint:    {error_hint(result.error_message)}")
         self._write("")
 
-    def log_finish(self, summary: "ReleaseSummary") -> None:
+    def log_finish(self, summary: "CreationSummary") -> None:
         """Log the final summary with failed item details."""
         total_time = sum(r.duration_seconds for r in summary.results)
 
@@ -120,4 +120,4 @@ class ReleaseLogger(ToolLogger):
         self._write(_SEPARATOR)
 
 
-__all__ = ["ReleaseLogger"]
+__all__ = ["CreationLogger"]

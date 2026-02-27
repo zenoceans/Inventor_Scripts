@@ -1,4 +1,4 @@
-"""Orchestrator for batch drawing creation and revision release."""
+"""Orchestrator for batch drawing creation."""
 
 from __future__ import annotations
 
@@ -14,16 +14,16 @@ from inventor_api.drawing import DrawingDocument, RevisionRowData
 from inventor_api.exceptions import DrawingError
 from inventor_utils.base_orchestrator import BaseOrchestrator, LogCallback, ProgressCallback
 
+from inventor_drawing_tool.creation_log import CreationLogger
 from inventor_drawing_tool.models import (
     DrawingItem,
     DrawingStatus,
-    ReleaseItemResult,
-    ReleaseSummary,
+    CreationItemResult,
+    CreationSummary,
     RevisionData,
     ScanResult,
 )
-from inventor_drawing_tool.release_log import ReleaseLogger
-from inventor_drawing_tool.scanner import scan_assembly_for_release
+from inventor_drawing_tool.scanner import scan_assembly_for_creation
 
 if TYPE_CHECKING:
     from inventor_drawing_tool.config import DrawingConfig
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger("zabra.drawing")
 
 
-class DrawingReleaseOrchestrator(BaseOrchestrator):
+class DrawingCreationOrchestrator(BaseOrchestrator):
     """Orchestrates drawing creation and revision table writing.
 
     Two-phase operation:
@@ -52,7 +52,7 @@ class DrawingReleaseOrchestrator(BaseOrchestrator):
         self._config = config
         self._revision_data = revision_data
         self._app: InventorApp | None = None
-        self._release_logger: ReleaseLogger | None = None
+        self._creation_logger: CreationLogger | None = None
 
     def scan(self) -> ScanResult:
         """Connect to Inventor and scan the active assembly.
@@ -63,7 +63,7 @@ class DrawingReleaseOrchestrator(BaseOrchestrator):
         self._emit("Connecting to Inventor...")
         self._app = InventorApp.connect()
         self._emit("Scanning assembly tree...")
-        result = scan_assembly_for_release(self._app, self._config)
+        result = scan_assembly_for_creation(self._app, self._config)
         self._emit(
             f"Found {result.total_parts} components: "
             f"{result.parts_with_drawings} with drawings, "
@@ -77,8 +77,8 @@ class DrawingReleaseOrchestrator(BaseOrchestrator):
         self,
         items: list[DrawingItem],
         cancel_event: Event | None = None,
-    ) -> ReleaseSummary:
-        """Execute the release batch.
+    ) -> CreationSummary:
+        """Execute the creation batch.
 
         For each selected item:
         1. If NEEDS_CREATION and config.auto_create_drawings:
@@ -90,28 +90,28 @@ class DrawingReleaseOrchestrator(BaseOrchestrator):
             cancel_event: Optional event to signal cancellation.
 
         Returns:
-            ReleaseSummary with per-item results.
+            CreationSummary with per-item results.
         """
         if self._app is None:
             self._emit("Connecting to Inventor...")
             self._app = InventorApp.connect()
 
-        selected = [i for i in items if i.include_in_release]
+        selected = [i for i in items if i.include]
         total = len(selected)
-        results: list[ReleaseItemResult] = []
+        results: list[CreationItemResult] = []
         created = 0
         revised = 0
         failed = 0
 
-        # Set up release logger next to the first item's part file
+        # Set up creation logger next to the first item's part file
         output_folder = os.path.dirname(items[0].part_path) if items else os.getcwd()
-        self._release_logger = ReleaseLogger(output_folder)
+        self._creation_logger = CreationLogger(output_folder)
 
         try:
-            self._release_logger.open()
+            self._creation_logger.open()
         except Exception as e:
-            self._emit(f"WARNING: Could not create release log: {e}")
-            self._release_logger = None
+            self._emit(f"WARNING: Could not create creation log: {e}")
+            self._creation_logger = None
 
         scan_for_log = ScanResult(
             assembly_path=items[0].part_path if items else "",
@@ -125,11 +125,11 @@ class DrawingReleaseOrchestrator(BaseOrchestrator):
             ),
         )
 
-        if self._release_logger:
+        if self._creation_logger:
             try:
-                self._release_logger.log_start(scan_for_log, self._revision_data, self._config)
+                self._creation_logger.log_start(scan_for_log, self._revision_data, self._config)
             except Exception as e:
-                self._emit(f"WARNING: Could not write release log header: {e}")
+                self._emit(f"WARNING: Could not write creation log header: {e}")
 
         self._emit(f"Processing {total} drawings...")
 
@@ -144,7 +144,7 @@ class DrawingReleaseOrchestrator(BaseOrchestrator):
             try:
                 action = self._process_item(item)
                 duration = time.monotonic() - start_time
-                result = ReleaseItemResult(
+                result = CreationItemResult(
                     item=item,
                     success=True,
                     action=action,
@@ -159,7 +159,7 @@ class DrawingReleaseOrchestrator(BaseOrchestrator):
                 duration = time.monotonic() - start_time
                 failed += 1
                 error_msg = str(e)
-                result = ReleaseItemResult(
+                result = CreationItemResult(
                     item=item,
                     success=False,
                     action="failed",
@@ -170,16 +170,16 @@ class DrawingReleaseOrchestrator(BaseOrchestrator):
                 logger.exception("Failed to process %s", item.part_name)
 
             results.append(result)
-            if self._release_logger:
+            if self._creation_logger:
                 try:
-                    self._release_logger.log_item(result)
+                    self._creation_logger.log_item(result)
                 except Exception as e:
-                    self._emit(f"WARNING: Could not write to release log: {e}")
-                    self._release_logger = None
+                    self._emit(f"WARNING: Could not write to creation log: {e}")
+                    self._creation_logger = None
 
         self._progress(total, total)
 
-        summary = ReleaseSummary(
+        summary = CreationSummary(
             total=total,
             created=created,
             revised=revised,
@@ -187,22 +187,22 @@ class DrawingReleaseOrchestrator(BaseOrchestrator):
             results=results,
         )
 
-        if self._release_logger:
+        if self._creation_logger:
             try:
-                self._release_logger.log_finish(summary)
-                self._release_logger.close()
-                self._emit(f"Log written to {self._release_logger.log_path}")
+                self._creation_logger.log_finish(summary)
+                self._creation_logger.close()
+                self._emit(f"Log written to {self._creation_logger.log_path}")
             except Exception as e:
-                self._emit(f"WARNING: Could not finalize release log: {e}")
+                self._emit(f"WARNING: Could not finalize creation log: {e}")
 
-        self._emit(f"Done: {created} created, {revised} revised, {failed} failed")
+        self._emit(f"Complete: {created} created, {revised} revised, {failed} failed")
         return summary
 
     @property
     def last_log_path(self) -> Path | None:
-        """Return the path to the last release log file."""
-        if self._release_logger:
-            return self._release_logger.log_path
+        """Return the path to the last creation log file."""
+        if self._creation_logger:
+            return self._creation_logger.log_path
         return None
 
     def _process_item(self, item: DrawingItem) -> str:
@@ -319,4 +319,4 @@ class DrawingReleaseOrchestrator(BaseOrchestrator):
             drawing_doc.close()
 
 
-__all__ = ["DrawingReleaseOrchestrator"]
+__all__ = ["DrawingCreationOrchestrator"]

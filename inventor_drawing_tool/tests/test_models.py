@@ -3,8 +3,8 @@
 from inventor_drawing_tool.models import (
     DrawingItem,
     DrawingStatus,
-    ReleaseSummary,
-    ReleaseItemResult,
+    CreationSummary,
+    CreationItemResult,
     RevisionData,
     ScanResult,
 )
@@ -49,9 +49,9 @@ class TestDrawingItem:
         assert item.document_type == "part"
         assert item.depth == 1
 
-    def test_default_include_in_release(self):
+    def test_default_include(self):
         item = _make_drawing_item()
-        assert item.include_in_release is True
+        assert item.include is True
 
     def test_no_drawing(self):
         item = _make_drawing_item(
@@ -66,9 +66,9 @@ class TestDrawingItem:
         assert item.document_type == "assembly"
         assert item.depth == 0
 
-    def test_excluded_from_release(self):
-        item = _make_drawing_item(include_in_release=False)
-        assert item.include_in_release is False
+    def test_excluded(self):
+        item = _make_drawing_item(include=False)
+        assert item.include is False
 
     def test_equality(self):
         a = _make_drawing_item()
@@ -145,10 +145,10 @@ class TestScanResult:
         assert s2.items == []
 
 
-class TestReleaseItemResult:
+class TestCreationItemResult:
     def test_success(self):
         item = _make_drawing_item()
-        result = ReleaseItemResult(
+        result = CreationItemResult(
             item=item,
             success=True,
             action="revision_only",
@@ -161,7 +161,7 @@ class TestReleaseItemResult:
 
     def test_failure(self):
         item = _make_drawing_item()
-        result = ReleaseItemResult(
+        result = CreationItemResult(
             item=item,
             success=False,
             action="created+revision",
@@ -173,25 +173,25 @@ class TestReleaseItemResult:
 
     def test_defaults(self):
         item = _make_drawing_item()
-        result = ReleaseItemResult(item=item, success=True)
+        result = CreationItemResult(item=item, success=True)
         assert result.action == ""
         assert result.error_message is None
         assert result.duration_seconds == 0.0
 
     def test_skipped_action(self):
-        item = _make_drawing_item(include_in_release=False)
-        result = ReleaseItemResult(item=item, success=True, action="skipped")
+        item = _make_drawing_item(include=False)
+        result = CreationItemResult(item=item, success=True, action="skipped")
         assert result.action == "skipped"
 
     def test_item_reference(self):
         item = _make_drawing_item()
-        result = ReleaseItemResult(item=item, success=True)
+        result = CreationItemResult(item=item, success=True)
         assert result.item is item
 
 
-class TestReleaseSummary:
+class TestCreationSummary:
     def test_defaults(self):
-        s = ReleaseSummary()
+        s = CreationSummary()
         assert s.total == 0
         assert s.created == 0
         assert s.revised == 0
@@ -200,8 +200,8 @@ class TestReleaseSummary:
 
     def test_construction(self):
         item = _make_drawing_item()
-        r = ReleaseItemResult(item=item, success=True, action="revision_only")
-        s = ReleaseSummary(total=3, created=1, revised=2, failed=0, results=[r])
+        r = CreationItemResult(item=item, success=True, action="revision_only")
+        s = CreationSummary(total=3, created=1, revised=2, failed=0, results=[r])
         assert s.total == 3
         assert s.created == 1
         assert s.revised == 2
@@ -209,7 +209,7 @@ class TestReleaseSummary:
         assert len(s.results) == 1
 
     def test_results_list_not_shared(self):
-        s1 = ReleaseSummary()
-        s2 = ReleaseSummary()
-        s1.results.append(ReleaseItemResult(item=_make_drawing_item(), success=True))
+        s1 = CreationSummary()
+        s2 = CreationSummary()
+        s1.results.append(CreationItemResult(item=_make_drawing_item(), success=True))
         assert s2.results == []

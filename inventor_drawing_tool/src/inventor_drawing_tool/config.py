@@ -1,4 +1,4 @@
-"""Configuration for the drawing release tool."""
+"""Configuration for the drawing creation tool."""
 
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ _CONFIG_FILENAME = "drawing_config.json"
 
 @dataclass
 class DrawingConfig:
-    """User-configurable settings for the drawing release tool."""
+    """User-configurable settings for the drawing creation tool."""
 
     # Drawing template
     template_path: str = ""

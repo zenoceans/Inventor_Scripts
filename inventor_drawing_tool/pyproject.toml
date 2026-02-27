@@ -1,7 +1,7 @@
 [project]
 name = "inventor-drawing-tool"
 version = "0.1.0"
-description = "Batch drawing creation and revision release tool for Inventor"
+description = "Batch drawing creation tool for Inventor"
 requires-python = ">=3.10"
 dependencies = ["inventor-api", "inventor-utils"]
 

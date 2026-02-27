@@ -64,7 +64,7 @@ TABS: list[TabSpec] = [
         config_key="inventor_simplify",
     ),
     TabSpec(
-        title="Drawing Release",
+        title="Drawing Creation",
         factory=_make_inventor_drawing_tab,
         config_key="inventor_drawing",
     ),

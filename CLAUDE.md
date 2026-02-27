@@ -7,7 +7,7 @@ Six-package uv workspace Python project:
 2. **`inventor_api/`** — Reusable, library-grade Pythonic wrapper around Autodesk Inventor 2026 COM API. Designed to be extractable as a standalone library.
 3. **`inventor_export_tool/`** — Inventor batch-export tool (STEP/DWG/PDF). CLI-standalone via `inventor-export`. Its GUI (`ExportToolGUI`) is a `ttk.Frame` tab embedded in Zabra-Cadabra.
 4. **`inventor_simplify_tool/`** — Inventor simplify/shrinkwrap tool. CLI-standalone via `inventor-simplify`. Its GUI is a `ttk.Frame` tab embedded in Zabra-Cadabra.
-5. **`inventor_drawing_tool/`** — Inventor batch drawing creation and revision release tool. CLI-standalone via `inventor-drawing`. Its GUI (`DrawingToolGUI`) is a `ttk.Frame` tab embedded in Zabra-Cadabra.
+5. **`inventor_drawing_tool/`** — Inventor batch drawing creation tool. CLI-standalone via `inventor-drawing`. Its GUI (`DrawingToolGUI`) is a `ttk.Frame` tab embedded in Zabra-Cadabra.
 6. **`inventor_utils/`** — Shared utilities (filenames, config helpers, base logger, base orchestrator) used across tool packages.
 
 See `ARCHITECTURE.md` for design, `COM-API-REFERENCE.md` for raw COM API, `Export_Plan.md` for task breakdown.
@@ -77,7 +77,7 @@ inventor_simplify_tool/                # Inventor Simplify tool
   tests/
     ...
 
-inventor_drawing_tool/                 # Inventor Drawing Release tool
+inventor_drawing_tool/                 # Inventor Drawing Creation tool
   pyproject.toml
   src/inventor_drawing_tool/
     __init__.py
@@ -89,7 +89,7 @@ inventor_drawing_tool/                 # Inventor Drawing Release tool
     config.py                          # JSON config persistence
     scanner.py                         # Assembly scanning for drawings
     orchestrator.py                    # Scan + create + revision logic
-    release_log.py                     # Release logging
+    creation_log.py                    # Creation logging
   tests/
     conftest.py
     test_models.py

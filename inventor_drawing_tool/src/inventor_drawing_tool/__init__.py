@@ -1,3 +1,3 @@
-"""Batch drawing creation and revision release tool for Inventor."""
+"""Batch drawing creation tool for Inventor."""
 
 __version__ = "0.1.0"

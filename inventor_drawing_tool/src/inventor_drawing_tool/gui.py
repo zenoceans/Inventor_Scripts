@@ -1,4 +1,4 @@
-"""Tkinter GUI for the Inventor Drawing Release Tool."""
+"""Tkinter GUI for the Inventor Drawing Creation Tool."""
 
 from __future__ import annotations
 
@@ -12,11 +12,11 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from inventor_drawing_tool.config import DrawingConfig
-    from inventor_drawing_tool.models import DrawingItem, ReleaseSummary, RevisionData, ScanResult
+    from inventor_drawing_tool.models import DrawingItem, CreationSummary, RevisionData, ScanResult
 
 
 class DrawingToolGUI(ttk.Frame):
-    """Drawing Release tab content — embeddable in a notebook."""
+    """Drawing Creation tab content — embeddable in a notebook."""
 
     POLL_INTERVAL_MS = 100
 
@@ -138,7 +138,7 @@ class DrawingToolGUI(ttk.Frame):
         self._scan_btn.pack(side="left", padx=(0, 8))
 
         self._execute_btn = ttk.Button(
-            btn_frame, text="Execute Release", command=self._on_execute, state="disabled"
+            btn_frame, text="Execute", command=self._on_execute, state="disabled"
         )
         self._execute_btn.pack(side="left", padx=(0, 8))
 
@@ -231,7 +231,7 @@ class DrawingToolGUI(ttk.Frame):
         self._tree_items.clear()
 
         for item in scan_result.items:
-            check = "\u2611" if item.include_in_release else "\u2610"
+            check = "\u2611" if item.include else "\u2610"
             drawing_path = item.drawing_path or ""
             iid = self._tree.insert(
                 "",
@@ -257,22 +257,22 @@ class DrawingToolGUI(ttk.Frame):
         if not iid or iid not in self._tree_items:
             return
         di = self._tree_items[iid]
-        di.include_in_release = not di.include_in_release
-        check = "\u2611" if di.include_in_release else "\u2610"
+        di.include = not di.include
+        check = "\u2611" if di.include else "\u2610"
         vals = list(self._tree.item(iid, "values"))
         vals[0] = check
         self._tree.item(iid, values=vals)
 
     def _select_all(self) -> None:
         for iid, di in self._tree_items.items():
-            di.include_in_release = True
+            di.include = True
             vals = list(self._tree.item(iid, "values"))
             vals[0] = "\u2611"
             self._tree.item(iid, values=vals)
 
     def _deselect_all(self) -> None:
         for iid, di in self._tree_items.items():
-            di.include_in_release = False
+            di.include = False
             vals = list(self._tree.item(iid, "values"))
             vals[0] = "\u2610"
             self._tree.item(iid, values=vals)
@@ -328,13 +328,13 @@ class DrawingToolGUI(ttk.Frame):
                     self._execute_btn.configure(state="normal")
                     self._append_log(f"Scan complete: {data.total_parts} component(s) found.")
                 elif msg_type == "execute_done":
-                    summary: ReleaseSummary = data
+                    summary: CreationSummary = data
                     if self._orchestrator is not None and self._orchestrator.last_log_path:
                         self._last_log_path = str(self._orchestrator.last_log_path)
                         self._open_log_btn.configure(state="normal")
                     self._on_worker_done()
                     self._append_log(
-                        f"Release complete: {summary.created} created, "
+                        f"Complete: {summary.created} created, "
                         f"{summary.revised} revised, {summary.failed} failed."
                     )
                     self._save_config()
@@ -392,12 +392,12 @@ class DrawingToolGUI(ttk.Frame):
 
     def _scan_worker(self) -> None:
         from inventor_api._com_threading import com_thread_scope
-        from inventor_drawing_tool.orchestrator import DrawingReleaseOrchestrator
+        from inventor_drawing_tool.orchestrator import DrawingCreationOrchestrator
 
         try:
             with com_thread_scope():
                 revision_data = self._get_revision_data()
-                self._orchestrator = DrawingReleaseOrchestrator(
+                self._orchestrator = DrawingCreationOrchestrator(
                     self._config,
                     revision_data,
                     progress_callback=self.set_progress,
@@ -421,7 +421,7 @@ class DrawingToolGUI(ttk.Frame):
         self._set_working(True)
         self._cancel_event.clear()
         self._progress_var.set(0)
-        self._progress_label.configure(text="Releasing...")
+        self._progress_label.configure(text="Processing...")
 
         items = self._get_items_from_treeview()
         self._worker_thread = Thread(target=self._execute_worker, args=(items,), daemon=True)
@@ -429,12 +429,12 @@ class DrawingToolGUI(ttk.Frame):
 
     def _execute_worker(self, items: list["DrawingItem"]) -> None:
         from inventor_api._com_threading import com_thread_scope
-        from inventor_drawing_tool.orchestrator import DrawingReleaseOrchestrator
+        from inventor_drawing_tool.orchestrator import DrawingCreationOrchestrator
 
         try:
             with com_thread_scope():
                 revision_data = self._get_revision_data()
-                self._orchestrator = DrawingReleaseOrchestrator(
+                self._orchestrator = DrawingCreationOrchestrator(
                     self._config,
                     revision_data,
                     progress_callback=self.set_progress,
