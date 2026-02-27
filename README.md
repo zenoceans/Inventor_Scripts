@@ -8,6 +8,7 @@ A multi-tab Windows desktop application for Autodesk Inventor 2026 automation. B
 |---|---|
 | **Inventor Export** | Batch-export STEP, DWG, and PDF from assemblies |
 | **STEP Simplify** | Import STEP files, apply Inventor's Simplify feature, and save as `.ipt` |
+| **Drawing Creation** | Batch-create IDW drawings with projected views and revision stamps |
 
 ---
 
@@ -34,8 +35,18 @@ A multi-tab Windows desktop application for Autodesk Inventor 2026 automation. B
 - Optionally insert simplified parts into a target assembly
 - Configurable simplify settings (envelope style, bounding type, feature removal levels)
 
+### Drawing Creation tab
+- Scans the active assembly tree for components missing co-located `.idw` drawings
+- Creates new IDW drawings from a user-specified template
+- Inserts projected views (base, top, right, iso) at configurable positions and scale
+- Adds a revision table row with revision number, description, made-by, and approved-by
+- Processes existing drawings too — applies revision stamps without re-creating them
+- GUI scan → review → execute workflow with per-item include/exclude toggling
+- Configurable scan depth, component filters, and view layout via settings dialog
+- CLI standalone via `inventor-drawing` with all options as flags
+
 ### General
-- Config persisted to `config.json` and `simplify_config.json` between sessions
+- Config persisted to `config.json`, `simplify_config.json`, and `drawing_config.json` between sessions
 - Zen-branded header with logo
 - Black-and-white minimalist theme
 
@@ -65,9 +76,10 @@ uv sync --all-packages
 ### From source
 
 ```bash
-uv run zabra-cadabra            # Full GUI (all tools)
-uv run inventor-export --help   # Export tool CLI
-uv run inventor-simplify --help # Simplify tool CLI
+uv run zabra-cadabra             # Full GUI (all tools)
+uv run inventor-export --help    # Export tool CLI
+uv run inventor-simplify --help  # Simplify tool CLI
+uv run inventor-drawing --help   # Drawing creation tool CLI
 ```
 
 ### From the `.exe`
@@ -88,6 +100,15 @@ Double-click `ZabraCadabra.exe`. See `usage_guide.txt` (bundled in the dist fold
 3. **Set output folder** — Click "Set Output Folder..." to choose where simplified `.ipt` files are saved.
 4. **Assembly (optional)** — Check "Insert simplified .ipt into target assembly" and browse to a `.iam` file.
 5. **Run** — Click "Run Simplify". Each file is imported, simplified, and saved. Progress is shown in the log.
+
+### Drawing Creation workflow
+
+1. **Template** — Set the drawing template path (`.idw` or `.dwt`) used for new drawings.
+2. **Revision data** — Fill in revision number, description, made-by, and approved-by fields.
+3. **Scan** — Click "Scan Assembly". The tool walks the active assembly tree and identifies components that are missing co-located `.idw` files.
+4. **Review** — Toggle which items to include or exclude. Items with status "existing" will receive a revision stamp only; items with status "new" will get a new drawing created first.
+5. **Execute** — Click "Execute". For each item: new drawings are created from the template with projected views, then a revision row is added. Progress and results are logged.
+6. **Settings** — Click "Settings..." to configure view layout (positions, scale), scan depth, and post-processing options.
 
 ---
 
@@ -164,7 +185,7 @@ There are no user-configurable options for DWG export — Inventor uses its buil
 
 ## Architecture
 
-This is a **uv workspace** with four packages. Each package has its own `pyproject.toml`, `src/` layout, and `tests/` directory.
+This is a **uv workspace** with six packages. Each package has its own `pyproject.toml`, `src/` layout, and `tests/` directory.
 
 ```
 Inventor_Scripts/
@@ -192,6 +213,19 @@ Inventor_Scripts/
 │       ├── test_simplifier.py
 │       ├── test_traversal.py
 │       └── test_types.py
+│
+├── inventor_utils/                     # Package: inventor-utils (shared utilities)
+│   ├── pyproject.toml
+│   ├── src/inventor_utils/
+│   │   ├── __init__.py                 # Public re-exports
+│   │   ├── filenames.py               # sanitize_filename, compose_filename, find_idw_path
+│   │   ├── config.py                  # Generic config load/save helpers
+│   │   ├── base_logger.py             # ToolLogger abstract base
+│   │   ├── base_orchestrator.py       # BaseOrchestrator with callbacks
+│   │   └── error_hints.py             # Human-readable error hints
+│   └── tests/
+│       ├── test_filenames.py
+│       └── test_config.py
 │
 ├── inventor_export_tool/               # Package: inventor-export-tool (CLI + GUI tab)
 │   ├── pyproject.toml                  # Declares script: inventor-export
@@ -225,6 +259,23 @@ Inventor_Scripts/
 │       ├── test_simplify_log.py
 │       └── test_simplify_models.py
 │
+├── inventor_drawing_tool/              # Package: inventor-drawing-tool (CLI + GUI tab)
+│   ├── pyproject.toml                  # Declares script: inventor-drawing
+│   ├── src/inventor_drawing_tool/
+│   │   ├── cli.py                     # inventor-drawing entry point
+│   │   ├── gui.py                     # DrawingToolGUI (ttk.Frame tab)
+│   │   ├── models.py                  # DrawingItem, RevisionData, CreationSummary
+│   │   ├── config.py                  # DrawingConfig, load/save
+│   │   ├── scanner.py                 # Assembly scanning for drawings
+│   │   ├── orchestrator.py            # Scan + create + revision logic
+│   │   ├── creation_log.py            # Creation run logging
+│   │   └── settings_dialog.py         # Advanced settings modal
+│   └── tests/
+│       ├── conftest.py
+│       ├── test_config.py
+│       ├── test_models.py
+│       └── test_scanner.py
+│
 └── zabra_cadabra/                      # Package: zabra-cadabra (GUI shell)
     ├── pyproject.toml                  # Declares gui-script: zabra-cadabra
     ├── build.py                        # PyInstaller build script
@@ -239,23 +290,27 @@ Inventor_Scripts/
 ### Package dependencies
 
 ```
-inventor-api          (no workspace deps)
-inventor-export-tool  -> inventor-api
+inventor-api           (no workspace deps)
+inventor-utils         (no workspace deps — pure Python)
+inventor-export-tool   -> inventor-api
 inventor-simplify-tool -> inventor-api
-zabra-cadabra         -> inventor-export-tool, inventor-simplify-tool
+inventor-drawing-tool  -> inventor-api, inventor-utils
+zabra-cadabra          -> inventor-export-tool, inventor-simplify-tool, inventor-drawing-tool
 ```
 
 ### Architecture boundaries
 
 - **`inventor_api`**: Pythonic COM wrapper. Returns its own types. No imports from application packages.
-- **`inventor_export_tool`**: Export tab logic. Imports from `inventor_api`. No dependency on `inventor_simplify_tool`.
-- **`inventor_simplify_tool`**: Simplify tab logic. Imports from `inventor_api`. No dependency on `inventor_export_tool`.
-- **`zabra_cadabra`**: Shell application. Imports tab factories from both tool packages.
+- **`inventor_utils`**: Shared pure-Python utilities (filenames, config, base logger, base orchestrator, error hints). No GUI, no COM, no `inventor_api` imports.
+- **`inventor_export_tool`**: Export tab logic. Imports from `inventor_api`. No dependency on other tool packages.
+- **`inventor_simplify_tool`**: Simplify tab logic. Imports from `inventor_api`. No dependency on other tool packages.
+- **`inventor_drawing_tool`**: Drawing creation tab logic. Imports from `inventor_api` and `inventor_utils`. No dependency on other tool packages.
+- **`zabra_cadabra`**: Shell application. Imports tab factories from all tool packages.
 - **GUI** modules (`gui.py`): No direct COM or `inventor_api` calls — go through orchestrators on background threads.
 
 ### Adding a new tab
 
-1. Create a new workspace package `inventor_<tool_name>/` with `src/`, `tests/`, and `pyproject.toml` declaring `inventor-api` as a dependency.
+1. Create a new workspace package `inventor_<tool_name>/` with `src/`, `tests/`, and `pyproject.toml` declaring `inventor-api` and `inventor-utils` as dependencies.
 2. Add a `gui.py` exposing a `ttk.Frame` subclass with `start_polling()` and `close()` methods.
 3. Add the package to `[tool.uv.workspace] members` in the root `pyproject.toml`.
 4. Add a factory function and `TabSpec` entry in `zabra_cadabra/src/zabra_cadabra/tab_registry.py`.
@@ -800,6 +855,229 @@ def save_simplify_config(config: SimplifyConfig, path: Path | None = None) -> No
 
 ---
 
+## `inventor_drawing_tool` API Reference
+
+### `inventor_drawing_tool.models` — Data models
+
+#### `class DrawingStatus(str, Enum)`
+
+```python
+class DrawingStatus(str, Enum):
+    EXISTING = "existing"
+    NEEDS_CREATION = "new"
+```
+
+#### `@dataclass DrawingItem`
+
+```python
+@dataclass
+class DrawingItem:
+    part_path: str
+    part_name: str
+    drawing_path: str | None
+    drawing_status: DrawingStatus
+    document_type: str          # "part" | "assembly"
+    depth: int
+    include: bool = True
+```
+
+#### `@dataclass RevisionData`
+
+```python
+@dataclass
+class RevisionData:
+    rev_number: str = ""
+    rev_description: str = ""
+    made_by: str = ""
+    approved_by: str = ""
+```
+
+#### `@dataclass ScanResult`
+
+```python
+@dataclass
+class ScanResult:
+    assembly_path: str
+    items: list[DrawingItem]
+    total_parts: int
+    parts_with_drawings: int
+    parts_without_drawings: int
+    content_center_excluded: int
+    warnings: list[str]
+```
+
+#### `@dataclass CreationItemResult`
+
+```python
+@dataclass
+class CreationItemResult:
+    item: DrawingItem
+    success: bool
+    action: str                 # "created+revision" | "revision_only" | "skipped" | "failed"
+    error_message: str | None
+    duration_seconds: float
+```
+
+#### `@dataclass CreationSummary`
+
+```python
+@dataclass
+class CreationSummary:
+    total: int
+    created: int
+    revised: int
+    failed: int
+    results: list[CreationItemResult]
+```
+
+---
+
+### `inventor_drawing_tool.config` — Configuration persistence
+
+#### `@dataclass DrawingConfig`
+
+```python
+@dataclass
+class DrawingConfig:
+    # Template
+    template_path: str = ""
+
+    # Scan filters
+    include_parts: bool = True
+    include_subassemblies: bool = False
+    include_suppressed: bool = False
+    include_content_center: bool = False
+    max_depth: int | None = None        # None = unlimited
+
+    # Drawing creation
+    auto_create_drawings: bool = True
+    default_scale: float = 1.0
+    insert_base_view: bool = True
+    insert_top_view: bool = True
+    insert_right_view: bool = False
+    insert_iso_view: bool = True
+    base_view_x: float = 15.0
+    base_view_y: float = 15.0
+    top_view_offset_y: float = 12.0
+    right_view_offset_x: float = 15.0
+    iso_view_x: float = 32.0
+    iso_view_y: float = 25.0
+
+    # Revision memory
+    last_rev_number: str = ""
+    last_rev_description: str = ""
+    last_made_by: str = ""
+    last_approved_by: str = ""
+
+    # Advanced
+    save_after_revision: bool = True
+    close_after_processing: bool = True
+```
+
+Persisted to `drawing_config.json` next to the executable.
+
+#### `load_drawing_config` / `save_drawing_config`
+
+```python
+def load_drawing_config(path: Path | None = None) -> DrawingConfig
+def save_drawing_config(config: DrawingConfig, path: Path | None = None) -> None
+```
+
+---
+
+### `inventor_drawing_tool.scanner` — Assembly scanning
+
+#### `scan_assembly_for_creation`
+
+```python
+def scan_assembly_for_creation(app: InventorApp, config: DrawingConfig) -> ScanResult
+```
+
+Walk the active assembly tree and identify components that need drawings created. For each component, checks for a co-located `.idw` file to determine `DrawingStatus.EXISTING` vs `NEEDS_CREATION`. Respects config filters (parts, sub-assemblies, suppressed, content center, max depth).
+
+---
+
+### `inventor_drawing_tool.orchestrator` — Creation orchestrator
+
+#### `class DrawingCreationOrchestrator(BaseOrchestrator)`
+
+```python
+DrawingCreationOrchestrator(
+    config: DrawingConfig,
+    revision_data: RevisionData,
+    progress_callback: ProgressCallback | None = None,
+    log_callback: LogCallback | None = None,
+)
+```
+
+| Member | Signature | Description |
+|---|---|---|
+| `scan` | `scan() -> ScanResult` | Connect to Inventor and scan the active assembly. |
+| `execute` | `execute(items: list[DrawingItem], cancel_event: Event \| None = None) -> CreationSummary` | Process items: create drawings where needed, apply revision stamps. |
+| `last_log_path` | `property -> Path \| None` | Path to the creation log file after execution. |
+
+**Per-item processing:**
+- `NEEDS_CREATION` + `auto_create_drawings=True`: Create drawing from template, insert views, add revision row → `"created+revision"`
+- `EXISTING`: Open drawing, add revision row → `"revision_only"`
+- `NEEDS_CREATION` + `auto_create_drawings=False`: → `"skipped"`
+
+---
+
+## `inventor_utils` API Reference
+
+### `inventor_utils.filenames` — Filename utilities
+
+```python
+def sanitize_filename(name: str) -> str
+def compose_filename(display_name: str, revision: str, extension: str) -> str
+def find_idw_path(source_path: str) -> str | None
+def is_content_center_path(file_path: str) -> bool
+```
+
+### `inventor_utils.config` — Generic config helpers
+
+```python
+def get_config_path(filename: str) -> Path
+def load_dataclass_config(cls: type[T], path: Path) -> T
+def save_dataclass_config(config: Any, path: Path) -> None
+```
+
+### `inventor_utils.base_logger` — Abstract logging base
+
+```python
+class ToolLogger(ABC):
+    def __init__(self, output_folder: str | Path, prefix: str) -> None: ...
+    log_path: Path | None       # property
+    def open(self) -> None: ...
+    def close(self) -> None: ...
+    @abstractmethod def log_start(self, *args, **kwargs) -> None: ...
+    @abstractmethod def log_finish(self, *args, **kwargs) -> None: ...
+```
+
+### `inventor_utils.base_orchestrator` — Base orchestrator
+
+```python
+ProgressCallback = Callable[[int, int], None]   # (current, total)
+LogCallback = Callable[[str], None]
+
+class BaseOrchestrator:
+    def __init__(
+        self,
+        progress_callback: ProgressCallback | None = None,
+        log_callback: LogCallback | None = None,
+    ) -> None: ...
+```
+
+### `inventor_utils.error_hints` — Error hints
+
+```python
+def error_hint(error_message: str) -> str
+```
+
+Returns a human-readable hint for known error patterns (missing revision table, COM errors, file-not-found, etc.), or `""` if unrecognized.
+
+---
+
 ## Building a Standalone Executable
 
 ```bash
@@ -829,8 +1107,10 @@ uv run zabra-cadabra
 
 # Run tests (per package)
 uv run --package inventor-api pytest
+uv run --package inventor-utils pytest
 uv run --package inventor-export-tool pytest
 uv run --package inventor-simplify-tool pytest
+uv run --package inventor-drawing-tool pytest
 uv run --package zabra-cadabra pytest
 
 # Lint and format
