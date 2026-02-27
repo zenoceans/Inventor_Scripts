@@ -13,6 +13,7 @@ build/
 test_exports/
 test_imports/
 config.json
+vendor_api_config.json
 telemetry_config.json
 logs/
 .claude/settings.local.json

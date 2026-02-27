@@ -117,7 +117,10 @@ class ZabraApp:
         self._notebook = ttk.Notebook(self._root)
         self._notebook.pack(fill="both", expand=True, padx=4, pady=(0, 4))
 
+        show_prototypes = self._configs.get("show_prototype_tabs", False)
         for spec in TABS:
+            if spec.prototype and not show_prototypes:
+                continue
             config = self._configs.get(spec.config_key) if spec.config_key else None
             tab = spec.factory(self._notebook, config)
             self._notebook.add(tab, text=spec.title)

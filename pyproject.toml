@@ -11,6 +11,7 @@ members = [
     "inventor_export_tool",
     "inventor_simplify_tool",
     "inventor_drawing_tool",
+    "vendor_api_tool",
     "zabra_cadabra",
 ]
 

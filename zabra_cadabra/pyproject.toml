@@ -7,6 +7,7 @@ dependencies = [
     "inventor-export-tool",
     "inventor-simplify-tool",
     "inventor-drawing-tool",
+    "vendor-api-tool",
 ]
 
 [project.gui-scripts]
@@ -16,6 +17,7 @@ zabra-cadabra = "zabra_cadabra.app:main"
 inventor-export-tool = { workspace = true }
 inventor-simplify-tool = { workspace = true }
 inventor-drawing-tool = { workspace = true }
+vendor-api-tool = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

@@ -24,6 +24,9 @@ class TabSpec:
     config_key: str | None = None
     """Key into the configs dict passed to ``ZabraApp``. ``None`` means no config."""
 
+    prototype: bool = False
+    """If True, tab is only shown when ``show_prototype_tabs`` config is enabled."""
+
 
 def _make_inventor_export_tab(parent: tk.Widget, config: Any) -> ttk.Frame:
     from inventor_export_tool.gui import ExportToolGUI
@@ -43,6 +46,12 @@ def _make_inventor_drawing_tab(parent: tk.Widget, config: Any) -> ttk.Frame:
     return DrawingToolGUI(parent, config)
 
 
+def _make_vendor_api_tab(parent: tk.Widget, config: Any) -> ttk.Frame:
+    from vendor_api_tool.gui import VendorApiGUI
+
+    return VendorApiGUI(parent, config)
+
+
 TABS: list[TabSpec] = [
     TabSpec(
         title="Inventor Export",
@@ -58,5 +67,11 @@ TABS: list[TabSpec] = [
         title="Drawing Release",
         factory=_make_inventor_drawing_tab,
         config_key="inventor_drawing",
+    ),
+    TabSpec(
+        title="Vendor API",
+        factory=_make_vendor_api_tab,
+        config_key="vendor_api",
+        prototype=True,
     ),
 ]
