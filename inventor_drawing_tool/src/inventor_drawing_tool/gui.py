@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import queue
 import tkinter as tk
@@ -11,7 +12,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from inventor_drawing_tool.config import DrawingConfig
-    from inventor_drawing_tool.models import DrawingItem, ReleaseSummary, ScanResult
+    from inventor_drawing_tool.models import DrawingItem, ReleaseSummary, RevisionData, ScanResult
 
 
 class DrawingToolGUI(ttk.Frame):
@@ -283,7 +284,7 @@ class DrawingToolGUI(ttk.Frame):
     # Revision data helper
     # ------------------------------------------------------------------
 
-    def _get_revision_data(self):
+    def _get_revision_data(self) -> RevisionData:
         from inventor_drawing_tool.models import RevisionData
 
         return RevisionData(
@@ -405,6 +406,7 @@ class DrawingToolGUI(ttk.Frame):
                 result = self._orchestrator.scan()
                 self._queue.put(("scan_done", result))
         except Exception as e:
+            logging.getLogger(__name__).exception("Worker thread failed")
             self._queue.put(("error", str(e)))
 
     # ------------------------------------------------------------------
@@ -441,6 +443,7 @@ class DrawingToolGUI(ttk.Frame):
                 summary = self._orchestrator.execute(items, self._cancel_event)
                 self._queue.put(("execute_done", summary))
         except Exception as e:
+            logging.getLogger(__name__).exception("Worker thread failed")
             self._queue.put(("error", str(e)))
 
     # ------------------------------------------------------------------

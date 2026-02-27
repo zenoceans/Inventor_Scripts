@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import queue
 import tkinter as tk
@@ -307,6 +308,7 @@ class ExportToolGUI(ttk.Frame):
                 summary = orch.scan()
                 self._queue.put(("scan_done", (summary, orch)))
         except Exception as e:
+            logging.getLogger(__name__).exception("Worker thread failed")
             self._queue.put(("error", str(e)))
 
     def _on_export(self) -> None:
@@ -347,6 +349,7 @@ class ExportToolGUI(ttk.Frame):
                 orch.export(new_summary, self._cancel_event)
                 self._queue.put(("export_done", orch.last_log_path))
         except Exception as e:
+            logging.getLogger(__name__).exception("Worker thread failed")
             self._queue.put(("error", str(e)))
 
     def _on_cancel(self) -> None:

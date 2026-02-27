@@ -1,3 +1,5 @@
+"""JSONL structured logging with rotating file handler for telemetry."""
+
 from __future__ import annotations
 
 import json
@@ -6,7 +8,11 @@ import sys
 from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from zabra_cadabra.telemetry.config import TelemetryConfig
+    from zabra_cadabra.telemetry.session import SessionContext
 
 
 class JSONLFormatter(logging.Formatter):
@@ -47,15 +53,12 @@ class SessionFilter(logging.Filter):
         return True
 
 
-def setup_logging(config: Any, session: Any) -> Path:
+def setup_logging(config: TelemetryConfig, session: SessionContext) -> Path:
     """Configure the root logger with a rotating JSONL file handler.
 
     Creates a logs directory next to the executable when frozen, or at the
     project root otherwise. Returns the Path to the log file being written.
     """
-    from zabra_cadabra.telemetry.config import TelemetryConfig  # noqa: F401
-    from zabra_cadabra.telemetry.session import SessionContext  # noqa: F401
-
     level = getattr(logging, config.log_level.upper(), logging.INFO)
 
     if getattr(sys, "frozen", False):

@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
-import datetime
 from pathlib import Path
-from typing import IO, TYPE_CHECKING
+from typing import TYPE_CHECKING
+
+from inventor_utils.base_logger import ToolLogger
+from inventor_utils.error_hints import error_hint
 
 if TYPE_CHECKING:
     from inventor_export_tool.config import AppConfig
@@ -14,35 +16,6 @@ _SEPARATOR = "=" * 60
 _THIN_SEPARATOR = "-" * 60
 
 
-def _error_hint(error_message: str) -> str:
-    """Return an actionable hint based on the error message pattern."""
-    msg = error_message.lower()
-    if "failed to open document" in msg or "could not open" in msg:
-        return (
-            "Check that the file exists, is not open in another program, "
-            "and is not checked out in Vault by another user."
-        )
-    if "no idw file found" in msg or "idw" in msg and "not found" in msg:
-        return (
-            "DWG/PDF export requires an IDW drawing file with the same name "
-            "as the part/assembly, in the same folder."
-        )
-    if "translator" in msg:
-        return (
-            "The required Inventor translator add-in could not be found. "
-            "Check that Inventor is installed correctly."
-        )
-    if "not found in memory" in msg or "document not found" in msg:
-        return (
-            "The document may have been closed or moved between scan and export. "
-            "Try scanning again."
-        )
-    return (
-        "Check that Inventor is running, the document is accessible, and try again. "
-        "If the problem persists, share this log file for troubleshooting."
-    )
-
-
 def _format_options(options: dict[str, object]) -> str:
     """Format an options dict as 'Key=Value, Key2=Value2'."""
     if not options:
@@ -50,26 +23,11 @@ def _format_options(options: dict[str, object]) -> str:
     return ", ".join(f"{k}={v}" for k, v in options.items())
 
 
-class ExportLogger:
+class ExportLogger(ToolLogger):
     """Writes a structured log file during export."""
 
     def __init__(self, output_folder: str | Path) -> None:
-        timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        self._path = Path(output_folder) / f"export_log_{timestamp}.txt"
-        self._file: IO[str] | None = None
-
-    @property
-    def log_path(self) -> Path:
-        return self._path
-
-    def open(self) -> None:
-        self._file = open(self._path, "w", encoding="utf-8")
-
-    def _write(self, text: str) -> None:
-        if self._file is None:
-            raise RuntimeError("Logger not opened. Call open() first.")
-        self._file.write(text + "\n")
-        self._file.flush()
+        super().__init__(output_folder, prefix="export_log")
 
     def log_config(
         self,
@@ -81,7 +39,7 @@ class ExportLogger:
         self._write(_SEPARATOR)
         self._write("INVENTOR EXPORT LOG")
         self._write(_SEPARATOR)
-        self._write(f"Date:     {datetime.datetime.now().isoformat()}")
+        self._write(f"Date:     {self._timestamp()}")
         self._write(f"Assembly: {assembly_name}")
         self._write(f"Path:     {assembly_path}")
         self._write(f"Output:   {config.output_folder}")
@@ -155,7 +113,7 @@ class ExportLogger:
         # Error details with actionable hint
         if result.error_message:
             self._write(f"         Error: {result.error_message}")
-            self._write(f"         Hint:  {_error_hint(result.error_message)}")
+            self._write(f"         Hint:  {error_hint(result.error_message)}")
 
         self._write("")
 
@@ -168,7 +126,7 @@ class ExportLogger:
         self._write(_SEPARATOR)
         self._write("SUMMARY")
         self._write(_SEPARATOR)
-        self._write(f"Finished:  {datetime.datetime.now().isoformat()}")
+        self._write(f"Finished:  {self._timestamp()}")
         self._write(f"Succeeded: {succeeded}, Failed: {failed}, Total time: {total_time:.1f}s")
 
         if failed:
@@ -183,14 +141,9 @@ class ExportLogger:
                     if r.item.component.idw_path:
                         self._write(f"     Drawing: {r.item.component.idw_path}")
                     self._write(f"     Error:   {r.error_message}")
-                    self._write(f"     Hint:    {_error_hint(r.error_message or '')}")
+                    self._write(f"     Hint:    {error_hint(r.error_message or '')}")
 
         self._write("")
         self._write("To change export settings, edit config.json next to the tool executable.")
         self._write('See README.md "Export Options" for all available translator options.')
         self._write(_SEPARATOR)
-
-    def close(self) -> None:
-        if self._file is not None:
-            self._file.close()
-            self._file = None

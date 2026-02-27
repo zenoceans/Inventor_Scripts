@@ -7,7 +7,6 @@ import os
 import time
 from pathlib import Path
 from threading import Event
-from typing import Callable
 
 from inventor_api import InventorApp, InventorDocument
 from inventor_api.exceptions import ExportError, InventorError
@@ -23,6 +22,7 @@ from inventor_export_tool.naming import (
     find_idw_path,
     resolve_duplicates,
 )
+from inventor_utils.base_orchestrator import BaseOrchestrator, LogCallback, ProgressCallback
 
 _tel = logging.getLogger("zabra.export")
 
@@ -103,11 +103,7 @@ def _build_export_items(
     return items
 
 
-ProgressCallback = Callable[[int, int], None]
-LogCallback = Callable[[str], None]
-
-
-class ExportOrchestrator:
+class ExportOrchestrator(BaseOrchestrator):
     """Orchestrates scan and export operations.
 
     Designed to run on a background thread. Uses COM thread scope internally.
@@ -124,9 +120,8 @@ class ExportOrchestrator:
         progress_callback: ProgressCallback | None = None,
         log_callback: LogCallback | None = None,
     ) -> None:
+        super().__init__(progress_callback, log_callback)
         self._config = config
-        self._progress = progress_callback or (lambda c, t: None)
-        self._log = log_callback or (lambda m: None)
         self._app: InventorApp | None = None
         self._doc_cache: dict[str, InventorDocument] = {}
         self._assembly_name: str = ""
@@ -135,7 +130,7 @@ class ExportOrchestrator:
 
     def _emit(self, msg: str) -> None:
         _tel.info(msg)
-        self._log(msg)
+        self._log_cb(msg)
 
     def scan(self) -> ScanSummary:
         """Connect to Inventor, walk the assembly tree, and build an export plan.

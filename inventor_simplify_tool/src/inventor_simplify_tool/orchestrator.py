@@ -8,7 +8,6 @@ import os
 import time
 from pathlib import Path
 from threading import Event
-from typing import Callable
 
 from inventor_api.application import InventorApp
 from inventor_api.importer import import_step, is_assembly_document
@@ -17,14 +16,12 @@ from inventor_api.simplifier import SimplifySettings, simplify_document
 from inventor_simplify_tool.config import SimplifyConfig
 from inventor_simplify_tool.models import SimplifyResult, SimplifyRow, SimplifySummary
 from inventor_simplify_tool.simplify_log import SimplifyLogger
+from inventor_utils.base_orchestrator import BaseOrchestrator, LogCallback, ProgressCallback
 
 _log = logging.getLogger(__name__)
 
-ProgressCallback = Callable[[int, int], None]
-LogCallback = Callable[[str], None]
 
-
-class SimplifyOrchestrator:
+class SimplifyOrchestrator(BaseOrchestrator):
     """Batch STEP import + simplify.  Designed to run on a background thread."""
 
     def __init__(
@@ -34,10 +31,9 @@ class SimplifyOrchestrator:
         progress_callback: ProgressCallback | None = None,
         log_callback: LogCallback | None = None,
     ) -> None:
+        super().__init__(progress_callback, log_callback)
         self._config = config
         self._rows = rows
-        self._progress = progress_callback or (lambda c, t: None)
-        self._log_cb = log_callback or (lambda m: None)
         self._app: InventorApp | None = None
         self._last_log_path: Path | None = None
 
@@ -106,8 +102,9 @@ class SimplifyOrchestrator:
             if logger:
                 try:
                     logger.log_result(result)
-                except Exception:
-                    pass
+                except Exception as e:
+                    self._emit(f"WARNING: Could not write to simplify log: {e}")
+                    logger = None
 
         self._progress(total, total)
         succeeded = sum(1 for r in results if r.success)

@@ -7,7 +7,12 @@ import sys
 import tkinter as tk
 from pathlib import Path
 from tkinter import ttk
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from zabra_cadabra.telemetry.config import TelemetryConfig
+    from zabra_cadabra.telemetry.session import SessionContext
+    from zabra_cadabra.telemetry.transport import NetworkTransport
 
 from zabra_cadabra.tab_registry import TABS
 from zabra_cadabra.theme import HEADER_BG, HEADER_FG, apply_bw_theme
@@ -19,10 +24,10 @@ class ZabraApp:
     def __init__(
         self,
         configs: dict[str, Any],
-        session: Any = None,
-        telemetry_config: Any = None,
-        log_file: Any = None,
-        transport: Any = None,
+        session: SessionContext | None = None,
+        telemetry_config: TelemetryConfig | None = None,
+        log_file: Path | None = None,
+        transport: NetworkTransport | None = None,
     ) -> None:
         self._configs = configs
         self._session = session

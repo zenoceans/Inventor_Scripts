@@ -46,9 +46,20 @@ def main() -> None:
     def log(msg: str) -> None:
         print(msg)
 
-    orchestrator = ExportOrchestrator(config, log_callback=log)
-    summary = orchestrator.scan()
-    results = orchestrator.export(summary)
+    from inventor_api._com_threading import com_thread_scope
+    from inventor_api.exceptions import InventorError
+
+    try:
+        with com_thread_scope():
+            orchestrator = ExportOrchestrator(config, log_callback=log)
+            summary = orchestrator.scan()
+            results = orchestrator.export(summary)
+    except InventorError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"Unexpected error: {e}", file=sys.stderr)
+        sys.exit(1)
 
     failed = sum(1 for r in results if not r.success)
     sys.exit(1 if failed else 0)

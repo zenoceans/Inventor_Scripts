@@ -52,7 +52,18 @@ def main() -> None:
     def log(msg: str) -> None:
         print(msg)
 
-    orchestrator = SimplifyOrchestrator(config, rows, log_callback=log)
-    summary = orchestrator.run()
+    from inventor_api._com_threading import com_thread_scope
+    from inventor_api.exceptions import InventorError
+
+    try:
+        with com_thread_scope():
+            orchestrator = SimplifyOrchestrator(config, rows, log_callback=log)
+            summary = orchestrator.run()
+    except InventorError as e:
+        print(f"ERROR: {e}", file=sys.stderr)
+        sys.exit(1)
+    except Exception as e:
+        print(f"Unexpected error: {e}", file=sys.stderr)
+        sys.exit(1)
 
     sys.exit(1 if summary.failed else 0)

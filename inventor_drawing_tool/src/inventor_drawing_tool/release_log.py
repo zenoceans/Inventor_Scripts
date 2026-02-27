@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from inventor_utils.base_logger import ToolLogger
+from inventor_utils.error_hints import error_hint
 
 if TYPE_CHECKING:
     from inventor_drawing_tool.config import DrawingConfig
@@ -19,29 +20,6 @@ if TYPE_CHECKING:
 
 _SEPARATOR = "=" * 60
 _THIN_SEPARATOR = "-" * 60
-
-
-def _error_hint(error_message: str) -> str:
-    """Return an actionable hint based on known error patterns."""
-    lower = error_message.lower()
-    if "no revision table" in lower:
-        return (
-            "The drawing template does not contain a revision table. "
-            "Add a revision table to the template in Inventor."
-        )
-    if "failed to open document" in lower or "could not open" in lower:
-        return (
-            "Check that the file exists, is not open in another program, "
-            "and is not checked out in Vault by another user."
-        )
-    if "no drawing template" in lower or "template" in lower:
-        return "Configure a drawing template (.idw) in the tool settings."
-    if "com error" in lower or "com_error" in lower or "rpc" in lower:
-        return "COM communication error. Ensure Inventor is responsive and not showing a dialog."
-    return (
-        "Check that Inventor is running, the document is accessible, and try again. "
-        "If the problem persists, share this log file for troubleshooting."
-    )
 
 
 class ReleaseLogger(ToolLogger):
@@ -108,7 +86,7 @@ class ReleaseLogger(ToolLogger):
         self._write(f"         Action:  {result.action}")
         if result.error_message:
             self._write(f"         Error:   {result.error_message}")
-            self._write(f"         Hint:    {_error_hint(result.error_message)}")
+            self._write(f"         Hint:    {error_hint(result.error_message)}")
         self._write("")
 
     def log_finish(self, summary: "ReleaseSummary") -> None:
@@ -136,7 +114,7 @@ class ReleaseLogger(ToolLogger):
                     if r.item.drawing_path:
                         self._write(f"     Drawing: {r.item.drawing_path}")
                     self._write(f"     Error:   {r.error_message}")
-                    self._write(f"     Hint:    {_error_hint(r.error_message or '')}")
+                    self._write(f"     Hint:    {error_hint(r.error_message or '')}")
 
         self._write("")
         self._write(_SEPARATOR)

@@ -79,8 +79,8 @@ class InventorApp:
     def active_document(self) -> InventorDocument:
         """Get the currently active document.
 
-        Returns an AssemblyDocument if the active doc is an assembly,
-        or a DrawingDocument if it is a drawing.
+        Returns an AssemblyDocument, DrawingDocument, or base InventorDocument
+        depending on the document type.
 
         Raises:
             InventorError: If no document is open.

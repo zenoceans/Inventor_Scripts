@@ -1,7 +1,7 @@
 """Tests for inventor_export_tool.export_log."""
 
 from inventor_export_tool.config import AppConfig
-from inventor_export_tool.export_log import ExportLogger, _error_hint
+from inventor_export_tool.export_log import ExportLogger
 from inventor_export_tool.models import (
     ComponentInfo,
     ExportItem,
@@ -197,24 +197,34 @@ class TestLogFinish:
 
 class TestErrorHint:
     def test_open_document_hint(self):
-        hint = _error_hint("Failed to open document: C:\\file.idw")
+        from inventor_utils.error_hints import error_hint
+
+        hint = error_hint("Failed to open document: C:\\file.idw")
         assert "not open in another program" in hint
 
     def test_idw_not_found_hint(self):
-        hint = _error_hint("No IDW file found")
+        from inventor_utils.error_hints import error_hint
+
+        hint = error_hint("No IDW file found")
         assert "IDW drawing file" in hint
 
     def test_translator_hint(self):
-        hint = _error_hint("Translator add-in not found")
+        from inventor_utils.error_hints import error_hint
+
+        hint = error_hint("Translator add-in not found")
         assert "installed correctly" in hint
 
     def test_doc_not_in_memory_hint(self):
-        hint = _error_hint("Document not found in memory")
+        from inventor_utils.error_hints import error_hint
+
+        hint = error_hint("Document not found in memory")
         assert "scanning again" in hint
 
     def test_fallback_hint(self):
-        hint = _error_hint("Unknown error occurred")
-        assert "try again" in hint
+        from inventor_utils.error_hints import error_hint
+
+        hint = error_hint("Unknown error occurred")
+        assert hint == ""
 
 
 class TestWriteWithoutOpen:

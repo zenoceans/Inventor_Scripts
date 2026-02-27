@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import queue
 import tkinter as tk
@@ -12,6 +13,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from inventor_simplify_tool.config import SimplifyConfig
+    from inventor_simplify_tool.models import SimplifyRow
 
 
 class SimplifyToolGUI(ttk.Frame):
@@ -335,7 +337,7 @@ class SimplifyToolGUI(ttk.Frame):
         self._worker_thread = Thread(target=self._run_worker, args=(rows,), daemon=True)
         self._worker_thread.start()
 
-    def _collect_rows(self) -> list:
+    def _collect_rows(self) -> list[SimplifyRow]:
         from inventor_simplify_tool.models import SimplifyRow
 
         rows: list[SimplifyRow] = []
@@ -361,6 +363,7 @@ class SimplifyToolGUI(ttk.Frame):
                 orch.run(cancel_event=self._cancel_event)
                 self._queue.put(("done", orch.last_log_path))
         except Exception as e:
+            logging.getLogger(__name__).exception("Worker thread failed")
             self._queue.put(("error", str(e)))
 
     def _on_cancel(self) -> None:

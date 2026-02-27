@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from inventor_simplify_tool.models import SimplifyResult, SimplifyRow, SimplifySummary
-from inventor_simplify_tool.simplify_log import SimplifyLogger, _error_hint
+from inventor_simplify_tool.simplify_log import SimplifyLogger
+from inventor_utils.error_hints import error_hint
 
 
 def _make_row(step: str = "a.stp", name: str = "out", folder: str = r"C:\out") -> SimplifyRow:
@@ -12,19 +13,19 @@ def _make_row(step: str = "a.stp", name: str = "out", folder: str = r"C:\out") -
 
 class TestErrorHint:
     def test_file_not_found(self) -> None:
-        assert "STEP file exists" in _error_hint("File not found: C:\\test.stp")
+        assert "STEP file exists" in error_hint("File not found: C:\\test.stp")
 
     def test_simplify_failure(self) -> None:
-        assert "Simplify" in _error_hint("Failed to simplify document")
+        assert "Simplify" in error_hint("Failed to simplify document")
 
     def test_save_failure(self) -> None:
-        assert "write permissions" in _error_hint("Failed to save document")
+        assert "write permissions" in error_hint("Failed to save document")
 
     def test_com_error(self) -> None:
-        assert "COM" in _error_hint("COM error: something went wrong")
+        assert "COM" in error_hint("COM error: something went wrong")
 
     def test_unknown_error(self) -> None:
-        assert _error_hint("something completely unexpected") == ""
+        assert error_hint("something completely unexpected") == ""
 
 
 class TestSimplifyLogger:
