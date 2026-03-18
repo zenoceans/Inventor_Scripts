@@ -18,3 +18,4 @@ telemetry_config.json
 logs/
 .claude/settings.local.json
 User_testing_files/
+.worktrees/
