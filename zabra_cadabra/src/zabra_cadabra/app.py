@@ -14,6 +14,8 @@ def main() -> None:
     from inventor_export_tool.config import load_config, save_config
     from inventor_simplify_tool.config import load_simplify_config, save_simplify_config
     from vendor_api_tool.config import load_vendor_api_config, save_vendor_api_config
+    from wattius_commissioning_tool.config import load_config as load_commissioning_config
+    from wattius_commissioning_tool.config import save_config as save_commissioning_config
     from zabra_cadabra.shell import ZabraApp
     from zabra_cadabra.telemetry import (
         SessionContext,
@@ -28,6 +30,7 @@ def main() -> None:
     simplify_config = load_simplify_config()
     drawing_config = load_drawing_config()
     vendor_api_config = load_vendor_api_config()
+    commissioning_config = load_commissioning_config()
     tel_config = load_telemetry_config()
 
     # Telemetry init
@@ -47,6 +50,7 @@ def main() -> None:
             "inventor_simplify": simplify_config,
             "inventor_drawing": drawing_config,
             "vendor_api": vendor_api_config,
+            "wattius_commissioning": commissioning_config,
             "show_prototype_tabs": True,
         },
         session=session,
@@ -67,4 +71,5 @@ def main() -> None:
         save_simplify_config(simplify_config)
         save_drawing_config(drawing_config)
         save_vendor_api_config(vendor_api_config)
+        save_commissioning_config(commissioning_config)
         save_telemetry_config(tel_config)

@@ -12,6 +12,7 @@ members = [
     "inventor_simplify_tool",
     "inventor_drawing_tool",
     "vendor_api_tool",
+    "wattius_commissioning_tool",
     "zabra_cadabra",
 ]
 

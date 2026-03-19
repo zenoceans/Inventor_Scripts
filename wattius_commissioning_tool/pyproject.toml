@@ -1,0 +1,20 @@
+[project]
+name = "wattius-commissioning-tool"
+version = "0.1.0"
+description = "Wattius commissioning tool for Zabra-Cadabra"
+requires-python = ">=3.10"
+dependencies = ["inventor-utils", "wbms-api"]
+
+[project.scripts]
+wattius-commission = "wattius_commissioning_tool.cli:main"
+
+[tool.uv.sources]
+inventor-utils = { workspace = true }
+wbms-api = { path = "../../../Wattius/3-8-3 (Stable)/Toolkit/Toolkit-API/wbms_api-1.0.0-py3-none-any.whl" }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
