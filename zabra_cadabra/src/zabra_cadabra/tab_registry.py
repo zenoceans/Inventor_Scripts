@@ -52,6 +52,12 @@ def _make_vendor_api_tab(parent: tk.Widget, config: Any) -> ttk.Frame:
     return VendorApiGUI(parent, config)
 
 
+def _make_commissioning_tab(parent: tk.Widget, config: Any) -> ttk.Frame:
+    from wattius_commissioning_tool.gui import CommissioningToolGUI
+
+    return CommissioningToolGUI(parent, config)
+
+
 TABS: list[TabSpec] = [
     TabSpec(
         title="Inventor Export",
@@ -73,5 +79,10 @@ TABS: list[TabSpec] = [
         factory=_make_vendor_api_tab,
         config_key="vendor_api",
         prototype=True,
+    ),
+    TabSpec(
+        title="BMU Commissioning",
+        factory=_make_commissioning_tab,
+        config_key="wattius_commissioning",
     ),
 ]

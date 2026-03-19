@@ -4,7 +4,7 @@ import copy
 from dataclasses import dataclass
 from pathlib import Path
 
-from inventor_utils.config import load_dataclass_config, save_dataclass_config
+from inventor_utils.config import get_config_path, load_dataclass_config, save_dataclass_config
 
 
 @dataclass
@@ -29,11 +29,15 @@ class CommissioningConfig:
     auto_start_on_scan: bool = True
 
 
-def load_config(path: Path) -> CommissioningConfig:
+def load_config(path: Path | None = None) -> CommissioningConfig:
+    if path is None:
+        path = get_config_path("commissioning_config.json")
     return load_dataclass_config(CommissioningConfig, path)
 
 
-def save_config(config: CommissioningConfig, path: Path) -> None:
+def save_config(config: CommissioningConfig, path: Path | None = None) -> None:
+    if path is None:
+        path = get_config_path("commissioning_config.json")
     if not config.remember_password:
         config = copy.copy(config)
         config.password = ""
