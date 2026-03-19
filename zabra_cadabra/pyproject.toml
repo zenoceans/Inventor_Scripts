@@ -8,6 +8,7 @@ dependencies = [
     "inventor-simplify-tool",
     "inventor-drawing-tool",
     "vendor-api-tool",
+    "wattius-commissioning-tool",
 ]
 
 [project.gui-scripts]
@@ -18,6 +19,7 @@ inventor-export-tool = { workspace = true }
 inventor-simplify-tool = { workspace = true }
 inventor-drawing-tool = { workspace = true }
 vendor-api-tool = { workspace = true }
+wattius-commissioning-tool = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]

@@ -11,6 +11,7 @@ members = [
     "inventor-simplify-tool",
     "inventor-utils",
     "vendor-api-tool",
+    "wattius-commissioning-tool",
     "zabra-cadabra",
 ]
 
@@ -472,6 +473,29 @@ requires-dist = [
 ]
 
 [[package]]
+name = "wattius-commissioning-tool"
+version = "0.1.0"
+source = { editable = "wattius_commissioning_tool" }
+dependencies = [
+    { name = "inventor-utils" },
+    { name = "wbms-api" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "inventor-utils", editable = "inventor_utils" },
+    { name = "wbms-api", path = "../../Wattius/3-8-3 (Stable)/Toolkit/Toolkit-API/wbms_api-1.0.0-py3-none-any.whl" },
+]
+
+[[package]]
+name = "wbms-api"
+version = "1.0.0"
+source = { path = "../../Wattius/3-8-3 (Stable)/Toolkit/Toolkit-API/wbms_api-1.0.0-py3-none-any.whl" }
+wheels = [
+    { filename = "wbms_api-1.0.0-py3-none-any.whl", hash = "sha256:fde8bc90ce0a3c8b2dacb056f52ac7e85cdae6939708664a083e669cffe165e1" },
+]
+
+[[package]]
 name = "zabra-cadabra"
 version = "0.1.0"
 source = { editable = "zabra_cadabra" }
@@ -480,6 +504,7 @@ dependencies = [
     { name = "inventor-export-tool" },
     { name = "inventor-simplify-tool" },
     { name = "vendor-api-tool" },
+    { name = "wattius-commissioning-tool" },
 ]
 
 [package.metadata]
@@ -488,4 +513,5 @@ requires-dist = [
     { name = "inventor-export-tool", editable = "inventor_export_tool" },
     { name = "inventor-simplify-tool", editable = "inventor_simplify_tool" },
     { name = "vendor-api-tool", editable = "vendor_api_tool" },
+    { name = "wattius-commissioning-tool", editable = "wattius_commissioning_tool" },
 ]
