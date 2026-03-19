@@ -10,7 +10,7 @@ wattius-commission = "wattius_commissioning_tool.cli:main"
 
 [tool.uv.sources]
 inventor-utils = { workspace = true }
-wbms-api = { path = "../Wattius/3-8-3 (Stable)/Toolkit/Toolkit-API/wbms_api-1.0.0-py3-none-any.whl" }
+wbms-api = { path = "../../../Wattius/3-8-3 (Stable)/Toolkit/Toolkit-API/wbms_api-1.0.0-py3-none-any.whl" }
 
 [build-system]
 requires = ["hatchling"]
