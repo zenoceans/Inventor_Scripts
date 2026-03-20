@@ -58,6 +58,12 @@ def _make_commissioning_tab(parent: tk.Widget, config: Any) -> ttk.Frame:
     return CommissioningToolGUI(parent, config)
 
 
+def _make_pdf_diff_tab(parent: tk.Widget, config: Any) -> ttk.Frame:
+    from pdf_diff_tool.gui import PdfDiffGUI
+
+    return PdfDiffGUI(parent, config)
+
+
 TABS: list[TabSpec] = [
     TabSpec(
         title="Inventor Export",
@@ -84,5 +90,10 @@ TABS: list[TabSpec] = [
         title="BMU Commissioning",
         factory=_make_commissioning_tab,
         config_key="wattius_commissioning",
+    ),
+    TabSpec(
+        title="PDF Diff",
+        factory=_make_pdf_diff_tab,
+        config_key="pdf_diff",
     ),
 ]

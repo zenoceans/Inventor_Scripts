@@ -9,6 +9,7 @@ dependencies = [
     "inventor-drawing-tool",
     "vendor-api-tool",
     "wattius-commissioning-tool",
+    "pdf-diff-tool",
 ]
 
 [project.gui-scripts]
@@ -20,6 +21,7 @@ inventor-simplify-tool = { workspace = true }
 inventor-drawing-tool = { workspace = true }
 vendor-api-tool = { workspace = true }
 wattius-commissioning-tool = { workspace = true }
+pdf-diff-tool = { workspace = true }
 
 [build-system]
 requires = ["hatchling"]
