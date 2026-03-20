@@ -58,6 +58,7 @@ class TestDiffPdfs:
         pdf_a = make_pdf("a.pdf", texts=["Page 1"])
         # Create a 2-page PDF manually
         import fitz
+
         doc = fitz.open()
         p1 = doc.new_page(width=595, height=842)
         p1.insert_text((72, 72), "Page 1", fontsize=14)
@@ -87,6 +88,7 @@ class TestDiffPdfs:
     def test_output_pdf_is_valid(self, make_pdf, tmp_path: Path):
         """The output diff PDF should be openable by PyMuPDF."""
         import fitz
+
         pdf_a = make_pdf("a.pdf", texts=["A"])
         pdf_b = make_pdf("b.pdf", texts=["B"])
         output = tmp_path / "diff.pdf"

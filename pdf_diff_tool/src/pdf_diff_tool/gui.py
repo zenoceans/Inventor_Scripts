@@ -112,9 +112,7 @@ class PdfDiffGUI(ttk.Frame):
         prog_frame.pack(fill="x", **pad)
 
         self._progress_var = tk.DoubleVar(value=0.0)
-        self._progress_bar = ttk.Progressbar(
-            prog_frame, variable=self._progress_var, maximum=100
-        )
+        self._progress_bar = ttk.Progressbar(prog_frame, variable=self._progress_var, maximum=100)
         self._progress_bar.pack(side="left", fill="x", expand=True, padx=(0, 8))
 
         self._progress_label = ttk.Label(prog_frame, text="Ready")
@@ -177,9 +175,7 @@ class PdfDiffGUI(ttk.Frame):
                     if result.has_differences:
                         self._append_log(f"Differences found. Saved: {result.output_path.name}")
                     else:
-                        self._append_log(
-                            f"No differences found. Saved: {result.output_path.name}"
-                        )
+                        self._append_log(f"No differences found. Saved: {result.output_path.name}")
                     self._on_worker_done()
                     if self._open_after_var.get():
                         os.startfile(str(result.output_path))
@@ -246,7 +242,9 @@ class PdfDiffGUI(ttk.Frame):
 
         try:
             log_cb(f"Comparing: {old.name} vs {new.name}")
-            result = diff_pdfs(old, new, output, dpi=self._config.dpi, progress_callback=progress_cb)
+            result = diff_pdfs(
+                old, new, output, dpi=self._config.dpi, progress_callback=progress_cb
+            )
             self._queue.put(("done", result))
         except Exception as e:
             logger.exception("Diff worker failed")

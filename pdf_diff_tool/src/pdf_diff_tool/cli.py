@@ -50,7 +50,9 @@ def main() -> None:
         print(f"Processing page {current}/{total}...")
 
     try:
-        result = diff_pdfs(args.old_pdf, args.new_pdf, output_path, dpi=dpi, progress_callback=log_progress)
+        result = diff_pdfs(
+            args.old_pdf, args.new_pdf, output_path, dpi=dpi, progress_callback=log_progress
+        )
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
