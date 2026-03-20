@@ -13,6 +13,7 @@ members = [
     "inventor_drawing_tool",
     "vendor_api_tool",
     "wattius_commissioning_tool",
+    "pdf_diff_tool",
     "zabra_cadabra",
 ]
 

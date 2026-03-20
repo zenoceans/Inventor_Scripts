@@ -1,0 +1,19 @@
+[project]
+name = "pdf-diff-tool"
+version = "0.1.0"
+description = "Visual PDF comparison tool using anaglyph overlay"
+requires-python = ">=3.10"
+dependencies = ["pymupdf>=1.24", "Pillow>=10.0", "numpy>=1.26", "inventor-utils"]
+
+[project.scripts]
+pdf-diff = "pdf_diff_tool.cli:main"
+
+[tool.uv.sources]
+inventor-utils = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
