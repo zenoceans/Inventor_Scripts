@@ -1,0 +1,20 @@
+{
+  "toolkit_path": "",
+  "firmware_path": "",
+  "config_path": "",
+  "username": "",
+  "password": "",
+  "remember_password": false,
+  "can_baudrate": "CAN_500kbps",
+  "base_can_node_id": 0,
+  "ble_mode": "DISABLED",
+  "network_mode": "DISABLE",
+  "static_ip": "0.0.0.0",
+  "netmask": "0.0.0.0",
+  "gateway": "0.0.0.0",
+  "dns1": "0.0.0.0",
+  "dns2": "0.0.0.0",
+  "manufacturing_date": "",
+  "log_directory": "logs",
+  "auto_start_on_scan": true
+}

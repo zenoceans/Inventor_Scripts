@@ -19,3 +19,5 @@ logs/
 .claude/settings.local.json
 User_testing_files/
 .worktrees/
+.superpowers/
+Wattius/
