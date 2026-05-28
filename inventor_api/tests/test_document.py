@@ -1,6 +1,11 @@
 """Tests for inventor_api.document module."""
 
-from conftest import make_mock_assembly_com, make_mock_com_document, make_mock_com_occurrence
+from conftest import (
+    make_mock_assembly_com,
+    make_mock_com_document,
+    make_mock_com_document_multi,
+    make_mock_com_occurrence,
+)
 
 from inventor_api.document import AssemblyDocument, ComponentOccurrence, InventorDocument
 from inventor_api.types import DocumentType
@@ -144,3 +149,79 @@ class TestComponentOccurrence:
         occ_com = make_mock_com_occurrence(doc_type=DocumentType.ASSEMBLY)
         occ = ComponentOccurrence(occ_com)
         assert occ.definition_document_type == DocumentType.ASSEMBLY
+
+
+class TestGetIproperty:
+    def test_finds_property_in_first_set(self):
+        com = make_mock_com_document_multi(
+            properties={
+                "Design Tracking Properties": {"Part Number": "BRK-001", "Revision Number": "A"},
+            }
+        )
+        doc = InventorDocument(com)
+        assert doc.get_iproperty("Part Number") == "BRK-001"
+
+    def test_finds_property_in_second_set(self):
+        com = make_mock_com_document_multi(
+            properties={
+                "Design Tracking Properties": {"Revision Number": "A"},
+                "Inventor Summary Information": {"Title": "Bracket Drawing"},
+            }
+        )
+        doc = InventorDocument(com)
+        assert doc.get_iproperty("Title") == "Bracket Drawing"
+
+    def test_case_insensitive_lookup(self):
+        com = make_mock_com_document_multi(
+            properties={
+                "Design Tracking Properties": {"Part Number": "BRK-001"},
+            }
+        )
+        doc = InventorDocument(com)
+        assert doc.get_iproperty("part number") == "BRK-001"
+        assert doc.get_iproperty("PART NUMBER") == "BRK-001"
+
+    def test_returns_none_for_missing_property(self):
+        com = make_mock_com_document_multi(
+            properties={
+                "Design Tracking Properties": {"Revision Number": "A"},
+            }
+        )
+        doc = InventorDocument(com)
+        assert doc.get_iproperty("Nonexistent Property") is None
+
+    def test_returns_none_for_none_value(self):
+        com = make_mock_com_document_multi(
+            properties={
+                "Design Tracking Properties": {"Part Number": None},
+            }
+        )
+        doc = InventorDocument(com)
+        assert doc.get_iproperty("Part Number") is None
+
+    def test_returns_none_for_empty_value(self):
+        com = make_mock_com_document_multi(
+            properties={
+                "Design Tracking Properties": {"Part Number": ""},
+            }
+        )
+        doc = InventorDocument(com)
+        assert doc.get_iproperty("Part Number") is None
+
+    def test_first_set_wins_on_name_collision(self):
+        """Design Tracking Properties is searched before Inventor Summary Information."""
+        com = make_mock_com_document_multi(
+            properties={
+                "Design Tracking Properties": {"Title": "DTP Title"},
+                "Inventor Summary Information": {"Title": "Summary Title"},
+            }
+        )
+        doc = InventorDocument(com)
+        # Search order: Design Tracking first
+        assert doc.get_iproperty("Title") == "DTP Title"
+
+    def test_special_filename_token_not_handled_here(self):
+        """get_iproperty does NOT handle {filename} — that's templates.py's job."""
+        com = make_mock_com_document_multi(properties={})
+        doc = InventorDocument(com)
+        assert doc.get_iproperty("filename") is None

@@ -63,6 +63,33 @@ class InventorDocument:
         except Exception:
             return None
 
+    def get_iproperty(self, name: str) -> str | None:
+        """Look up an iProperty by display name across all property sets.
+
+        Search order: iterates PropertySets in COM-defined order (typically:
+        Design Tracking Properties, Inventor Summary Information,
+        Inventor Document Summary Information, Inventor User Defined Properties).
+        Case-insensitive on ``name``.
+
+        Returns the value as a stripped non-empty string, or None if the
+        property is missing, its value is None, or its value is empty.
+        """
+        try:
+            for prop_set in self._com.PropertySets:
+                try:
+                    prop = prop_set.Item(name)
+                    value = prop.Value
+                    if value is None:
+                        continue
+                    result = str(value).strip()
+                    if result:
+                        return result
+                except Exception:
+                    continue
+        except Exception:
+            pass
+        return None
+
     def get_revision(self) -> str:
         """Get the revision number from Design Tracking Properties.
 

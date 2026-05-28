@@ -49,6 +49,65 @@ def make_mock_com_document(
     return doc
 
 
+def make_mock_com_document_multi(
+    *,
+    full_filename: str = r"C:\Projects\Part.ipt",
+    document_type: int = DocumentType.PART,
+    properties: dict[str, dict[str, str | None]] | None = None,
+) -> MagicMock:
+    """Create a mock COM document with full multi-set property support.
+
+    Args:
+        full_filename: The FullFileName property.
+        document_type: The DocumentType integer.
+        properties: Dict of {prop_set_name: {prop_name: value}}.
+    """
+    if properties is None:
+        properties = {
+            "Design Tracking Properties": {"Revision Number": "A"},
+        }
+
+    doc = MagicMock()
+    doc.FullFileName = full_filename
+    doc.DocumentType = document_type
+
+    # Build per-set mocks
+    prop_set_mocks: list[MagicMock] = []
+    set_mock_by_name: dict[str, MagicMock] = {}
+    for set_name, prop_dict in properties.items():
+        ps = MagicMock()
+        ps.Name = set_name
+
+        def _make_prop_item(d: dict[str, str | None]):
+            def prop_item(name: str) -> MagicMock:
+                # Case-insensitive lookup
+                for k, v in d.items():
+                    if k.lower() == name.lower():
+                        pm = MagicMock()
+                        pm.Value = v
+                        return pm
+                raise KeyError(name)
+
+            return prop_item
+
+        ps.Item = MagicMock(side_effect=_make_prop_item(prop_dict))
+        prop_set_mocks.append(ps)
+        set_mock_by_name[set_name] = ps
+
+    prop_sets = MagicMock()
+    prop_sets.__iter__ = MagicMock(side_effect=lambda: iter(prop_set_mocks))
+    prop_sets.Count = len(prop_set_mocks)
+
+    def set_item(name: str) -> MagicMock:
+        if name in set_mock_by_name:
+            return set_mock_by_name[name]
+        raise KeyError(name)
+
+    prop_sets.Item = MagicMock(side_effect=set_item)
+    doc.PropertySets = prop_sets
+    return doc
+
+
 def make_mock_com_occurrence(
     *,
     document: MagicMock | None = None,
