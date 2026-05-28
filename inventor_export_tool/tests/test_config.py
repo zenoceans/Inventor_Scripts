@@ -1,6 +1,8 @@
 """Tests for inventor_export_tool.config."""
 
-from inventor_export_tool.config import AppConfig, load_config, save_config
+import json
+
+from inventor_export_tool.config import AppConfig, NamingPreset, load_config, save_config
 
 
 class TestAppConfigDefaults:
@@ -110,3 +112,89 @@ class TestExportOptions:
         c = AppConfig(export_options=opts)
         assert c.export_options.get("step") == {"ApplicationProtocolType": 3}
         assert c.export_options.get("dwg") is None
+
+
+class TestNamingPreset:
+    def test_default_fields(self):
+        p = NamingPreset(name="OleM Default", template="{Part Number} - {Description}")
+        assert p.name == "OleM Default"
+        assert p.template == "{Part Number} - {Description}"
+
+
+class TestAppConfigNewFields:
+    def test_naming_presets_default(self):
+        c = AppConfig()
+        assert len(c.naming_presets) == 1
+        assert c.naming_presets[0].name == "OleM Default"
+        assert "{Part Number}" in c.naming_presets[0].template
+
+    def test_active_preset_name_default(self):
+        c = AppConfig()
+        assert c.active_preset_name == "OleM Default"
+
+    def test_prompt_folder_on_export_default(self):
+        c = AppConfig()
+        assert c.prompt_folder_on_export is False
+
+    def test_active_preset_returns_preset(self):
+        preset = NamingPreset(name="My Preset", template="{Part Number}")
+        c = AppConfig(naming_presets=[preset], active_preset_name="My Preset")
+        assert c.active_preset() == preset
+
+    def test_active_preset_falls_back_to_first_on_mismatch(self):
+        preset = NamingPreset(name="First", template="{Part Number}")
+        c = AppConfig(naming_presets=[preset], active_preset_name="Nonexistent")
+        assert c.active_preset() == preset
+
+
+class TestLoadConfigMigration:
+    def test_missing_naming_presets_seeds_default(self, tmp_path):
+        path = tmp_path / "config.json"
+        path.write_text('{"output_folder": "C:\\\\exports"}', encoding="utf-8")
+        config = load_config(path)
+        assert len(config.naming_presets) == 1
+        assert config.naming_presets[0].name == "OleM Default"
+
+    def test_empty_naming_presets_seeds_default(self, tmp_path):
+        path = tmp_path / "config.json"
+        path.write_text('{"naming_presets": []}', encoding="utf-8")
+        config = load_config(path)
+        assert len(config.naming_presets) == 1
+
+    def test_naming_presets_loaded_as_preset_objects(self, tmp_path):
+        path = tmp_path / "config.json"
+        data = {
+            "naming_presets": [{"name": "Custom", "template": "{Part Number}"}],
+            "active_preset_name": "Custom",
+        }
+        path.write_text(json.dumps(data), encoding="utf-8")
+        config = load_config(path)
+        assert isinstance(config.naming_presets[0], NamingPreset)
+        assert config.naming_presets[0].name == "Custom"
+
+    def test_orphaned_active_preset_name_reset_to_first(self, tmp_path):
+        path = tmp_path / "config.json"
+        data = {
+            "naming_presets": [{"name": "Only Preset", "template": "{Part Number}"}],
+            "active_preset_name": "Deleted Preset",
+        }
+        path.write_text(json.dumps(data), encoding="utf-8")
+        config = load_config(path)
+        assert config.active_preset_name == "Only Preset"
+
+    def test_round_trip_with_presets(self, tmp_path):
+        path = tmp_path / "config.json"
+        original = AppConfig(
+            naming_presets=[
+                NamingPreset("Default", "{Part Number} - Rev{Revision Number}"),
+                NamingPreset("Short", "{Part Number}"),
+            ],
+            active_preset_name="Short",
+            prompt_folder_on_export=True,
+        )
+        save_config(original, path)
+        loaded = load_config(path)
+        assert len(loaded.naming_presets) == 2
+        assert loaded.naming_presets[1].name == "Short"
+        assert loaded.active_preset_name == "Short"
+        assert loaded.prompt_folder_on_export is True
