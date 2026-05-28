@@ -1,0 +1,444 @@
+
+# wBMS Release Changelog (Safety MCU)
+
+
+---------------------------------------------------------------
+## v3.8.3 STABLE
+
+- Added compatibility with four chargers (different CAN IDs) 
+  in "TC Charger" CAN protocol.
+- Added data on Battery Pack data reporting CAN bus protocol:
+   - Add Analog Input voltage values (0x5D0 + BMU ID).
+   - Add current sensor maximum and minimum current values 
+     (0x540 + BMU ID).
+   - Add maximum and minimum balancing check voltage (0x580 + 
+     BMU ID).
+- Added CAN bus incompatibility with older FW versions due to 
+  new CAN data.
+- Added new output trigger option: "BMU temperature range".
+- Added two new heating pads operating modes:
+  - "CONNECTED with charging current".
+  - "CONNECTED with discharging current".
+- Improved robustness of General Purpose Outputs (GPO) 
+  diagnostics.
+- Improved CMU temperature measurement circuitry monitoring.
+- Improved communication robustness when uploading BMU
+  settings.
+- "Sleep delay (post-run)" time not applied after a BMU PoR 
+  event.
+- Bugfix: solved problem of not reaching 100% SoC when 
+  "CHARGED/DISCHARGED trigger by SoC" is enabled.
+- Bugfix: solved problem with HVIL detection (only affecting 
+  RMX and MX-PRO v2.X BMUs).
+- Bugfix: solved problem with J1939 SPN8413 (HVESS High-Voltage 
+  Bus Connection Status) wrong "Connection in Process" status 
+  reported sometimes.
+- Bugfix: solved problem not reporting all balancing status in 
+  Battery Pack Extended data reporting CAN bus protocol when 
+  there are more than 576 cells.
+- Bugfix: solved wrong current sensor OS warning DTC reported 
+  when using multiple current sensors.
+- Bugfix: solved problem with "Consumption for SoC 
+  compensation" when using multiple current sensors.
+
+---------------------------------------------------------------
+## v3.8.2 BETA
+
+- Added "Relaxation current" parameter to improve SoC OCV 
+  calibration.
+- Added "Maximum current when DISCONNECTED" paramenter. The BMS 
+  can allow current flow when contactors are open.
+- Added compatibility with JY1000 IMD sensor.
+- Added BMU external temperature sensors "Beta" and "Nominal 
+  resistance" configuration.
+- Added new heating pads mode "Only when CONNECTED".
+- Added coin cell battery CR2032 voltage measurement for 
+  wBMS-HX BMU.
+- Added CAN bus BMU Main data reporting enable parameter. When 
+  disabled the CANBus BMU Main data reporting messages are not 
+  sent and the Duplicated Primary error is disabled.
+- Added CAN bus J1939 configuration parameters, one for 
+  enabling the Battery System messages and the other for 
+  enabling Battery Pack messages.
+- Added diagnostics for General Purpose Outputs (GPO) 9 and 10.
+- Improved temperature value reporting when NTC open wires or 
+  short circuit occurs.
+- Bugfix: solved incorrect data reporting of individual current 
+  sensor measurements.
+- Bugfix: solved possible false errors with redundant current
+  sensor mismatch.
+
+---------------------------------------------------------------
+## v3.8.1 BETA
+
+- Updated wBMS-Toolkit Inputs/Outputs configuration user 
+  interface. All inputs and outputs of the BMU are configurable.
+- Added all inputs and outputs status in BMU CAN bus protocol 
+  (0x5D0 + BMU ID) for BMU-MX Pro and BMU-HX.
+- Added all outputs CAN interlocks in BMU CAN bus protocol 
+  actuation message (0x200 + BMU ID) for BMU-MX Pro and BMU-HX.
+- Added up to 4 analog current sensor measurements on compatible 
+  hardware for monitoring multiple strings.
+- Added the possiblity of closing contactors during the "Sleep 
+  delay (post-run)". Contactors connection follows the Start 
+  signal request instead of forcing a disconnection during this
+  stage.
+- Added automatic timestamp update through Internet in BMU-HX.
+- Removed number of CMUs limitation on CMU Link for BMU-MX Pro 
+  and BMU-HX. These models accept all CMU architectures up to 48
+  CMUs and now support monitoring up to 864 cells and 432 cell
+  temperatures.
+- Improved NTC open-wire detection in HX CMU16.
+- Improved J1939 actuation message processing when transmitted 
+  at 50 Hz.
+- Bugfix: solved problem with BMU incorrectly reporting 0A 
+  setpoint (stop charge/discharge flags) after the end of
+  charge/discharge when using "CV stage controller" as "wBMS 
+  (through current setpoint)".
+- Bugfix: solved J1939 actuation message CRC calculation error 
+  when any unused bit (no SPN associated) is set to 1.
+
+---------------------------------------------------------------
+## v3.7.12 STABLE
+
+- Changed wBMS System SoC algorithm. wBMS BMU SoC algorithm is
+  not modified.
+- Added force SoC functionality through CAN bus in messages
+  0x200 + CAN Node ID. See new dbc file for more information.
+- Bugfix: improved NTC open-wire filter when using CMU16-HX.
+
+---------------------------------------------------------------
+## v3.7.11 STABLE
+
+- Improved Power Relay Outputs high side switch management in 
+  compatible hardware.
+- Improved Power Relay Outputs status monitoring.
+- Added new signals in BMU data reporting CAN protocol. Added 
+  fully charged, null current and cells relaxed flags.
+- Bugfix: solved undesired BMU reset requests when using 
+  undervoltage or input switch sleep mode.
+- Bugfix: solved problem with BMU going to sleep during 
+  overdischarge recovery when using undervoltage or input 
+  switch sleep mode.
+- Bugfix: solved false CMU12-MX internal error detection.
+- Bugfix: solved problems with topping charge related to the 
+  recent end of charge SoC functionalities.
+- Bugfix: solved system lock internal memory error when 
+  updating from older firmware versions.
+- Bugfix: solved false balancing check error detection when 
+  using some specific cell counts per CMU.
+- Bugfix: solved problem with maximeters capacity and energy 
+  counters after a reset request.
+- Bugfix: improved reliability of the analog current sensor
+  initialisation after POR events.
+  
+---------------------------------------------------------------
+## v3.7.10 STABLE
+
+- Improved DoD functionality. Replaced DoD configuration for 
+  end of charge/discharge SoC configuration.
+- Improved end of charge/discharge with internal voltage
+  control.
+- Improved sleep/wake-up transitions.
+- Added sleep delay configuration (Post-Run).
+- Removed CMU advanced diagnostics configuration.
+- Bugfix: solved SoC errors when using heating pads.
+
+---------------------------------------------------------------
+## v3.7.9 BETA
+
+- Improved CMU diagnostics for SIL2.
+- Improved wBMS-VIC diagnostics for SIL2.
+- Improved end of charge SoC calibration.
+- Improved J1939 protocol.
+- Improved internal constant voltage control functionality.
+- Updated minimum balancing cell voltage to 2,25 V for LTO
+  cells.
+- Updated BMU supply voltage limit to maximum 32V.
+- Added J1939 actuation mode.
+- Added "Max cell imbalance to calibrate SoC" configuration 
+  parameter.
+- Added Honeywell BES safety sensor option.
+- Added compatibility with wBMS-HX v4.2 and wBMS-MX-Pro v3.1.
+- Added parallel BMU outputs option for contactors with high
+  inrush current (from 2,5 to 5 A).
+- Added IVT-3-Pro (C-Sample) IMD compatibility and updated
+  previous option to IVT-3-Pro B3-sample.
+- Removed duty cycle option from BMU outputs configuration.
+- Removed OCV compensation for stop charge/discharge voltages.
+- Bugfix: solved system lock configuration problems.
+
+---------------------------------------------------------------
+## v3.7.8 STABLE
+
+- Improved emergency signal disconnection delay bypass.
+	Instantaneous complete Battery System disconnection when 
+	actuated in a Primary BMU. 
+- v3.7.3 Bugfix: solved wrong CMU internal error detection in 
+	CMU12 with less than 8 cells.
+
+---------------------------------------------------------------
+## v3.7.7 STABLE
+
+- Updated "minimum precharge" percentage configuration: 
+	- Changed resolution from 1% to 0.1%.
+	- Changed range from 0-100% to 75-99.9%.
+- Improved BMU role Auto-adressing: bugfixes and improved
+  behaviour.
+- Improved duplicated secondary check.
+- Added CMU18-HX configuration profile.
+- Bugfix: corrected CAN bus J1939 SPN format to match protocol 
+	specification.
+- Bugfix: solved wrong behaviour with CAN network size set to 
+	Dyanamic CAN source (0x741).
+
+---------------------------------------------------------------
+## v3.7.6 BETA
+
+- Added balancing level configuration (battery pack or string).
+- Added initial SoH configuration.
+- Added different buttons to clear maximeters separately.
+- Added resting time configuration for auto-off differentiated 
+	by modes.
+- Added Auto-scan heartbeat message (reception of message 0x741 
+	is necessary).
+- v3.7.5 Bugfix: solved problem with BMUs not booting.
+
+---------------------------------------------------------------
+## v3.7.5 BETA
+
+- Improved BMU sleep mode power consumption.
+- Improved CAN bus firmware update, stop transmissions of other 
+	BMUs during update.
+- Added force custom OCV SoC functionality in wBMS-Toolkit 
+	maintenance tab.
+- Added compatibility with Ingeteam Ingecon 100 kW.
+- Added parallelization communication quality diagnostic in 
+	wBMS-Toolkit advanced tab.
+- Added configurable current sensor filter.
+- v3.7.4 Bugfix: solved wrong analog current sensor offset
+  error.
+- Bugfix: solved heatpads power consumption calculation problem.
+- Bugfix: solved BMU role Auto-addressing problems.
+
+---------------------------------------------------------------
+## v3.7.4 BETA
+
+- Added system lock functionality.
+- Added power relays high side management in compatible HW.
+- Added thermal runaway detection algorithm with BMU
+  temperature.
+- Added analog current sensor redundant ADC check.
+- Improved duplicated primary check.
+- Improved maximeters storing.
+- Improved dual range and redundant analog sensor mismatch 
+	detection.
+- Updated Battery System error conditions.
+- v3.7.3 Bugfix: solved VIC timeout problems.
+	
+---------------------------------------------------------------
+## v3.7.3 BETA
+
+- Improved CMUs diagnostics.
+- Improved emergency signal error behaviour: for this error the 
+	power relays disconnection is immediate.
+- Added configurable shunt resistance for wBMS-VIC current
+  sensor.
+- Added redundant single ended current sensor functionality.
+- Improved maximeters protection/error counters.
+- Bugfix: solved problem with bluetooth module not powering off 
+	when disabled.
+- Bugfix: solved problem with BMU setup network configuration.
+- Bugfix: solved problems with BMU role auto addressing when
+  also using CAN network size as auto scan.
+
+---------------------------------------------------------------
+## v3.7.2 BETA
+
+- Added Safety Report in the wBMS-Toolkit.
+- v3.7.1 Bugfix: DTCs for I/O activation not set for HVIL.
+
+---------------------------------------------------------------
+## v3.7.1 BETA
+
+- Added HVIL input and output type.
+- Added IMD measurement multi-purpose trigger.
+
+---------------------------------------------------------------
+## v3.7.0 BETA
+
+- Added possibility to have multiple strings in one BMU.
+- Added new configuration for link, fuse and battery power
+  relays check.
+- Separate auto-addressing from J1939.
+- Added new multipurpose: link voltage indicator.
+
+---------------------------------------------------------------
+---------------------------------------------------------------
+## v3.6.17 STABLE
+
+- Bugfix: solved Bluetooth communication problem.
+- Bugfix: solved CMU link configuration check problem.
+- Bugfix: solved problem with maximeter current when using 
+  digital current sensors.
+
+---------------------------------------------------------------
+## v3.6.16 BETA
+
+- Minor improvements.
+
+---------------------------------------------------------------
+## v3.6.15 BETA
+
+- Automatic BMU ID selection by using the J1939 auto-addressing
+  protocol.
+- Implemented new insulation resistance monitoring through 
+  wBMS-VIC.
+- Changed internal multi-string CAN protocol between BMUs when
+  parallelizing. See Application Manual for more information.
+- Improved charge control algorithms.
+
+---------------------------------------------------------------
+## v3.6.14 BETA
+
+- Added compatibility with wBMS-VIC current and voltage 
+  measurement (isolation not available).
+- Added power relays cycle counters.
+- Added internal voltage control factor configuration.
+- Bugfix: differential current sensor Vref error.
+
+---------------------------------------------------------------
+## v3.6.13 BETA
+
+- Improved Bender ISO175 driver.
+- Bugfix: solved duplicated ID error when BMU mode is dynamic.
+- Bugfix: solved wrong balancing voltage delta target 
+  calculation in autonomous always mode.
+- Bugfix: solved problem with internal voltage control.
+- Improved CMU voltage measurement mismatch error detection.
+  
+---------------------------------------------------------------
+## v3.6.12 BETA
+
+- Added individually configurable CMU profiles.
+
+---------------------------------------------------------------
+## v3.6.11 BETA
+
+- Added compatibility with differential analog current sensors, 
+  like RIEDON SSA2.
+- Added current sensor maximum current configuration parameter.
+- Added new constant voltage current control.
+- Solved issue with RTC time update.
+- Improved reliability of the embedded Modbus TCP server in 
+  the wBMS-HX-BMU.
+- Improved Bender ISO175 driver.
+
+---------------------------------------------------------------
+## v3.6.10 BETA
+
+- Added heating multi-purpose output trigger with configurable
+  parameters.
+- Added maximum operating temperature delta. In case that this
+  value is exceeded, an error is triggered.
+- Added CAN network size source configuration: Static, Auto-Scan
+  and CAN bus.
+- Added allowed number of cell temperatures sensors in error 
+  (open-wire or short) per BMU.
+- Reduced middle relay actuation time.
+- Added Advanced Delta Voltage Fault (ADVF) check.
+- Added uploading configuration during BMU INIT state.
+- Solved issue with on-board high-voltage sensor for the 
+  wBMS-HX-BMU.
+- Improved reliability of the embedded Modbus TCP server in 
+  the wBMS-HX-BMU.
+
+---------------------------------------------------------------
+## v3.6.9 BETA
+
+- Added IP configuration in BMU Setup for wBMS-HX.
+- Added current correction control: Disabled, Static (setpoint 
+  multiplied by a factor) and Dynamic (setpoint changes 
+  dynamically to correct overload condition)
+- Changed minimum BMU supply voltage to 9V for wBMS-Rxx and
+  wBMS-MX.
+- Improved internal parallelization CAN protocol.
+- Improved iso175 IMD driver.
+
+---------------------------------------------------------------
+## v3.6.8 BETA
+
+- Improved precharge overcurrent detection.
+- Added normally closed relay feedback configuration option.
+- Improved HV sensor: added independent configuration for
+  battery, link and fuse measuring points.
+- Added basic ESS J1939 CAN protocol messages.
+- Added Dynamic BMU ID mode using hardware inputs.
+- Added Enable SD parameter. The SD will be disabled by default.
+- Added CAN 2 baudrate configuration.
+- Bugfix: balancing check error in some cases.
+
+---------------------------------------------------------------
+## v3.6.7 BETA
+
+- Minor improvements.
+
+---------------------------------------------------------------
+## v3.6.6 BETA
+
+- Improved Overload behaviour.
+- Added custom BMU supply mode.
+- Added wBMS-HX compatibility with 48 CMU, 576 cells and 288 
+  external temperatures.
+- Improved IMD configuration.
+- Added configurable Thermal Runaway detector.
+- Added configurable Advanced Relaxation Delta Voltage detector.
+
+---------------------------------------------------------------
+## v3.6.5 BETA
+
+- Added balancing check to all Wattius CMUs.
+- Improved current control state. With a coin battery (CR2032)
+  the charge status is kept when BMU is powered off.
+- Added Thermal Runaway detector (hardcoded values).
+- Added Advanced Relaxation Delta Voltage detector (hardcoded
+  values).
+  
+---------------------------------------------------------------
+## v3.6.4 BETA
+
+- Improved CAN communication timeout behavior.
+- Improved Manual Sleep Mode: considers also an over-discharge
+  condition.
+- Bugfix: solved communication problem with CMU18.
+
+---------------------------------------------------------------
+## v3.6.3 BETA
+
+- v3.6.0 bugfixes: solved SoC calculation error during 
+  initialization.
+
+---------------------------------------------------------------
+## v3.6.2 BETA
+
+- v3.6.0 bugfixes: solved configuration upload problem.
+
+---------------------------------------------------------------
+## v3.6.1 BETA
+
+- Improved iso175 IMD driver 
+- v3.6.0 bugfixes: solved remaining capacity calculation error.
+
+---------------------------------------------------------------
+## v3.6.0 BETA
+
+- Added iso175 IMD compatibility.
+- Added SoH, SoE and SoP, self-discharge rate, and other 
+  relevant battery data for new battery regulations. See state
+  estimators tab in wBMS-Toolkit.
+- Added wBMS-HX-BMU v4.1 compatibility.
+- Improved cell relaxing time calculation. With a coin battery 
+  (CR2032) the relaxing time can be calculated when BMU is
+  powered off.
+
+---------------------------------------------------------------

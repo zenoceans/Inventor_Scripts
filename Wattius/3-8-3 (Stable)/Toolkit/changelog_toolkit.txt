@@ -1,0 +1,51 @@
+
+# wBMS Toolkit Release Changelog
+
+
+---------------------------------------------------------------
+## v3.8.3 STABLE
+
+- Added System Lock and Flags EEPROM status in the Advanced tab.
+- Moved the battery manufacturing and commissioning date to the
+    BMU Setup from the BMU Settings.
+- Added fully charged, current is null, cell relaxed and 
+    imbalanced cells flags in the BP Main tab.
+- Added a new BMU temperature trigger option in Output 
+	Multi-purpose.
+- Added two new heating pads operating modes: 
+	"CONNECTED with charging current"
+	"CONNECTED with discharging current".
+- New version of Toolkit-API v1.0.0 available.
+- Bugfix: solved problem when importing a configuration with
+	thresholds trigger.
+- Bugfix: solved possible tables error when uploading the BMU 
+	settings.
+  
+---------------------------------------------------------------
+## v3.8.2 BETA
+
+- Added new funcionality to import a session from a .wLic file. 
+- Added BMU external temperature sensors "Beta" and "Nominal
+	resistance" configuration. 
+- Added compatibility with JY1000-EVDC IMD sensor. 
+- Added reporting of absolute maximum and minimum balancing
+  voltage drop. 
+- Added new heating pads mode "Only when CONNECTED".
+- Added CAN bus J1939 configuration parameters: 
+	"HVESS messages (Battery System level)". 
+	"HVESPx messages (Battery Pack level)".
+- Added possibility to monitor the redundant cell voltage
+  measurements and the balancing voltage drop for each
+  individual cell.
+- Added "Relaxation current" parameter to improve SoC OCV
+  calibration. 
+- Added "Maximum current when DISCONNECTED" paramenter. 
+	The BMS can allow current flow when contactors are open. 
+- Added CAN bus BMU Main data reporting enable parameter. When
+  disabled the CANBus BMU Main data reporting messages are not
+  sent and the Duplicated Primary error is disabled.
+- Minor changes in Ethernet connection reporting state. Now 
+  "Network mode" shows the BMU Setup Network Mode (Disabled, 
+  Static IP or DHCP) configured mode. 
+  
+---------------------------------------------------------------

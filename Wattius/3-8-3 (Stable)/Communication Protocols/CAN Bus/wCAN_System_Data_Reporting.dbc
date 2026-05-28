@@ -1,0 +1,174 @@
+VERSION ""
+
+
+NS_ : 
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: BMS_Primary
+
+
+BO_ 577 wCAN_Charge_Control: 8 BMS_Primary
+ SG_ Max_Batt_Voltage : 7|16@0+ (0.1,0) [0|65535] "V" Vector__XXX
+ SG_ Max_Charge_Current : 23|16@0+ (0.1,0) [0|65535] "A" Vector__XXX
+ SG_ Min_Batt_Voltage : 39|16@0+ (0.1,0) [0|65535] "V" Vector__XXX
+ SG_ Max_Discharge_Current : 55|16@0+ (0.1,0) [0|65535] "A" Vector__XXX
+
+BO_ 833 wCAN_Battery_Data: 8 BMS_Primary
+ SG_ Act_Battery_Voltage : 7|16@0+ (0.1,0) [0|65535] "V" Vector__XXX
+ SG_ Act_Battery_Current : 23|16@0- (0.1,0) [-32768|32767] "A" Vector__XXX
+ SG_ Battery_Capacity : 39|16@0+ (1,0) [0|64000] "Ah" Vector__XXX
+ SG_ SoC : 55|16@0+ (0.01,0) [0|10000] "%" Vector__XXX
+
+BO_ 1089 wCAN_BMS_Status: 8 BMS_Primary
+ SG_ System_State : 7|8@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ Stop_Charge_Flag : 8|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ Stop_Disharge_Flag : 16|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ Reserved : 31|24@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ System_connection_status : 55|8@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ CAN_Network_Size : 61|6@0+ (1,0) [0|0] "" Vector__XXX
+
+BO_ 705 wCAN_Cell_Voltages: 8 BMS_Primary
+ SG_ Max_Cell_Voltage : 7|16@0+ (1,0) [0|65535] "mV" Vector__XXX
+ SG_ Min_Cell_Voltage : 23|16@0+ (1,0) [0|65535] "mV" Vector__XXX
+ SG_ Avg_Cell_Voltage : 39|16@0+ (1,0) [0|65535] "mV" Vector__XXX
+
+BO_ 961 wCAN_Cell_Temp: 8 BMS_Primary
+ SG_ Max_Cell_Temp : 7|16@0- (0.01,0) [-32768|32767] "ºC" Vector__XXX
+ SG_ Min_Cell_Temp : 23|16@0- (0.01,0) [-32768|32767] "ºC" Vector__XXX
+ SG_ Avg_Cell_Temp : 39|16@0- (0.01,0) [-32768|32767] "ºC" Vector__XXX
+
+BO_ 1217 wCAN_Balancing_Temp: 8 BMS_Primary
+ SG_ Max_Balancing_Temp : 7|16@0- (0.01,0) [-32768|32767] "ºC" Vector__XXX
+ SG_ Min_Balancing_Temp : 23|16@0- (0.01,0) [-32768|32767] "ºC" Vector__XXX
+
+BO_ 1857 wCAN_BMS_Control: 8 Vector__XXX
+ SG_ Start_Signal : 48|1@0+ (1,0) [0|1] ""  BMS_Primary
+ SG_ Reset_Signal : 56|1@0+ (1,0) [0|1] ""  BMS_Primary
+ SG_ Auto_OFF_Output_Control : 40|1@0+ (1,0) [0|1] "" Vector__XXX
+ SG_ Mode_Selector : 49|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ Reserved : 7|4@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ Sleep_Signal : 41|1@0+ (1,0) [0|1] "" Vector__XXX
+ SG_ IMD_disable_signal : 42|1@0+ (1,0) [0|1] "" Vector__XXX
+ SG_ Expected_number_of_BMUs : 11|4@0+ (1,0) [1|15] "" Vector__XXX
+ SG_ CAN_Interlock_BMU02 : 17|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ CAN_Interlock_BMU03 : 18|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ CAN_Interlock_BMU04 : 19|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ CAN_Interlock_BMU05 : 20|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ CAN_Interlock_BMU06 : 21|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ CAN_Interlock_BMU07 : 22|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ CAN_Interlock_BMU08 : 23|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ CAN_Interlock_BMU09 : 24|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ CAN_Interlock_BMU10 : 25|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ CAN_Interlock_BMU11 : 26|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ CAN_Interlock_BMU12 : 27|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ CAN_Interlock_BMU13 : 28|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ CAN_Interlock_BMU14 : 29|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ CAN_Interlock_BMU15 : 30|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ CAN_Interlock_BMU16 : 31|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ CAN_Interlock_BMU01 : 16|1@0+ (1,0) [0|0] "" Vector__XXX
+ SG_ Reserved : 39|8@0+ (1,0) [0|0] "" Vector__XXX
+
+BO_ 449 wCAN_Charger_Feedback: 8 Vector__XXX
+ SG_ Charger_Voltage : 7|16@0+ (0.1,0) [0|65535] "V"  BMS_Primary
+ SG_ Charger_Current : 23|16@0- (0.1,0) [-32768|32767] "A"  BMS_Primary
+ SG_ Charger_Status : 55|8@0+ (1,0) [0|0] ""  BMS_Primary
+ SG_ Charger_Temp : 39|16@0- (0.1,0) [-32768|32767] "ºC"  BMS_Primary
+
+BO_ 593 wCAN_GPIO_States: 8 BMS_Primary
+ SG_ Reserved : 7|64@0+ (1,0) [0|0] "" Vector__XXX
+
+
+
+CM_ SG_ 577 Max_Batt_Voltage "Maximum allowed total battery voltage during charge.
+";
+CM_ SG_ 577 Max_Charge_Current "Maximum allowed charge output current.
+";
+CM_ SG_ 577 Min_Batt_Voltage "Minimum allowed total battery voltage during discharge.
+";
+CM_ SG_ 577 Max_Discharge_Current "Maximum allowed discharge output current.
+";
+CM_ SG_ 833 Act_Battery_Voltage "Measured total battery voltage.
+";
+CM_ SG_ 833 Act_Battery_Current "Measured total output battery current. (Charging is positive).
+";
+CM_ SG_ 833 Battery_Capacity "Current battery nominal capacity (considering only active strings in parallel).";
+CM_ SG_ 833 SoC "Battery state-of-charge.
+";
+CM_ SG_ 705 Max_Cell_Voltage "Highest cell voltage measured, including all conected wBMS devices.
+";
+CM_ SG_ 705 Min_Cell_Voltage "Lowest cell voltage measured, including all conected wBMS devices.
+";
+CM_ SG_ 705 Avg_Cell_Voltage "Average cell voltage measured, including all conected wBMS devices.
+
+";
+CM_ SG_ 961 Max_Cell_Temp "Highest cell temperature measured, including all conected wBMS devices.";
+CM_ SG_ 961 Min_Cell_Temp "Lowest cell temperature measured, including all conected wBMS devices.
+";
+CM_ SG_ 961 Avg_Cell_Temp "Average cell temperature measured, including all conected wBMS devices.";
+CM_ SG_ 1217 Max_Balancing_Temp "Highest balancing temperature measured, including all conected wBMS devices.";
+CM_ SG_ 1217 Min_Balancing_Temp "Lowest balancing temperature measured, including all conected wBMS devices.";
+CM_ SG_ 449 Charger_Voltage "Output voltage value read by the charger / inverter.";
+CM_ SG_ 449 Charger_Current "Output current value read by the charger / inverter.
+";
+CM_ SG_ 449 Charger_Temp "Internal temperature of the charger / inverter.
+";
+BA_DEF_  "BusType" STRING ;
+BA_DEF_DEF_  "BusType" "CAN";
+VAL_ 1089 System_State 0 "INITIALIZING" 1 "READY" 2 "ACTIVE" 3 "FAILURE" ;
+VAL_ 1089 Stop_Charge_Flag 0 "CHARGE ALLOWED" 1 "CHARGE NOT ALLOWED" ;
+VAL_ 1089 Stop_Disharge_Flag 0 "DISCHARGE ALLOWED" 1 "DISCHARGE NOT ALLOWED" ;
+VAL_ 1089 Reserved 1 "STATUS OK" 4 "TOOLKIT INJECTED ERROR" 6 "EEPROM MEMORY ERROR" 8 "CAN BUS PROTOCOL TIMEOUT" 9 "INTERNAL WATCHDOG ERROR" 10 "IDLE CURRENT ERROR" 11 "BMS POWER SUPPLY VOLTAGE ERROR" 12 "BMS BOARD TEMPERATURE ERROR" 13 "BMU INTERNAL VOLTAGE REGULATOR ERROR" 14 "BMS ARCHITECTURE CONFIGURATION ERROR" 15 "BMS GENERAL CONFIGURATION ERROR" 16 "PARALLELIZATION ERROR" 17 "CHARGE/DISCHARGE ERROR" 18 "BMS MEASURMENT ERROR" 19 "INTERNAL ADC ERROR" 20 "EMERGENCY SIGNAL ACTUATED" 21 "DIGITAL OUTPUT DRIVER ERROR" 22 "POWER RELAYS ERROR" 23 "CURRENT SENSOR ERROR" 24 "INTERNAL OS ERROR" 25 "EXTERNAL CONFIGURABLE ALARM" 26 "START SIGNAL TIMEOUT" 27 "AUTO RESET RETRY ATTEMPTS" 28 "ISOLATION MONITOR ERROR" 29 "BOOTLOADER ERROR" 30 "AUTO OFF" 31 "INTERNAL_SYSTEM_ERROR" ;
+VAL_ 1089 System_connection_status 0 "DISCONNECTED" 1 "CONNECTING_FIRST" 2 "SOME_CONNECTED" 3 "CHECKING_PARALLELIZATION_CURRENT" 4 "COMPLETED" 5 "DISCONNECTING" ;
+VAL_ 1857 Start_Signal 0 "START SIGNAL NOT ACTIVE" 1 "START SIGNAL ACTIVE" ;
+VAL_ 1857 Reset_Signal 0 "RESET NOT REQUESTED" 1 "RESET REQUESTED" ;
+VAL_ 1857 Auto_OFF_Output_Control 1 "OPEN" 0 "CLOSE" ;
+VAL_ 1857 Mode_Selector 0 "Mode 1" 1 "Mode 2" ;
+VAL_ 1857 Sleep_Signal 0 "Disable" 1 "Enable" ;
+VAL_ 1857 IMD_disable_signal 0 "IMD enabled" 1 "IMD disabled" ;
+VAL_ 1857 CAN_Interlock_BMU02 0 "Interlock_active" 1 "Interlock_idle" ;
+VAL_ 1857 CAN_Interlock_BMU03 0 "Interlock_active" 1 "Interlock_idle" ;
+VAL_ 1857 CAN_Interlock_BMU04 0 "Interlock_active" 1 "Interlock_idle" ;
+VAL_ 1857 CAN_Interlock_BMU05 0 "Interlock_active" 1 "Interlock_idle" ;
+VAL_ 1857 CAN_Interlock_BMU06 0 "Interlock_active" 1 "Interlock_idle" ;
+VAL_ 1857 CAN_Interlock_BMU07 0 "Interlock_active" 1 "Interlock_idle" ;
+VAL_ 1857 CAN_Interlock_BMU08 0 "Interlock_active" 1 "Interlock_idle" ;
+VAL_ 1857 CAN_Interlock_BMU09 0 "Interlock_active" 1 "Interlock_idle" ;
+VAL_ 1857 CAN_Interlock_BMU10 0 "Interlock_active" 1 "Interlock_idle" ;
+VAL_ 1857 CAN_Interlock_BMU11 0 "Interlock_active" 1 "Interlock_idle" ;
+VAL_ 1857 CAN_Interlock_BMU12 0 "Interlock_active" 1 "Interlock_idle" ;
+VAL_ 1857 CAN_Interlock_BMU13 0 "Interlock_active" 1 "Interlock_idle" ;
+VAL_ 1857 CAN_Interlock_BMU14 0 "Interlock_active" 1 "Interlock_idle" ;
+VAL_ 1857 CAN_Interlock_BMU15 0 "Interlock_active" 1 "Interlock_idle" ;
+VAL_ 1857 CAN_Interlock_BMU16 0 "Interlock_active" 1 "Interlock_idle" ;
+VAL_ 1857 CAN_Interlock_BMU01 0 "Interlock_active" 1 "Interlock_idle" ;
+VAL_ 449 Charger_Status 0 "STATUS_OK" 1 "STATUS_ERROR" ;
+

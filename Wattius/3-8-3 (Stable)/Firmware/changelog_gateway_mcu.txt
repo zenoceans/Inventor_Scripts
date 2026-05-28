@@ -1,0 +1,108 @@
+
+# wBMS-HX-BMU Release Changelog (Gateway MCU)
+
+---------------------------------------------------------------
+## v1.2.2
+
+- Improved MQTT connection robustness to reduce unwanted 
+	disconnections.
+- Added MQTT connection settings to HTTP configuration portal 
+	on port 80:
+	- Enable/Disable MQTT measurements and events 
+	(JSON messages)
+	- Enable/Disable MQTT SD offline cache
+	- Enable/Disable MQTT remote wBMS-Toolkit connection
+- Added SD offline cache feature: when enabled and 
+	and an external SD card is present, messages are 
+	redirected to the SD card if MQTT transmission is 
+	not available.
+- Updated MQTT Quality of Service (QoS) to QoS 1. 
+
+---------------------------------------------------------------
+## v1.2.1
+
+- Added new registers to the Modbus read table. 
+	See Modbus documentation for more details.
+- Improved wBMS-Toolkit's user feedback if Ethernet link
+	is down or up. 
+- Added DTCs to MQTT events JSON messages. 
+	See MQTT documentation for more details.
+- Bugfix: Modbus and MQTT clients could read uninitialized 
+	variables after a reset. 
+
+---------------------------------------------------------------
+## v1.2.0
+
+- Added new registers to the Modbus read table. 
+	See Modbus documentation for more details.   
+- Implemented a version-mismatch warning between the Safety 
+	MCU and the Gateway MCU.  
+- Added automatic timestamp updates via Internet NTP 
+	(Network Time Protocol).
+- Added new data fields to MQTT measurement JSON messages. 
+	See MQTT documentation for more details.
+- Implemented a new MQTT JSON message compression algorithm 
+	optimized for AWS. Only changed fields are now transmitted.
+	See MQTT documentation for more details. 
+- Changed MQTT Quality of Service (QoS) to zero. 
+ 
+---------------------------------------------------------------
+## v1.1.5
+
+- Changed to new BMU MAC address 02:00:00:xx:xx:xx.
+- Changed to new BMU hostname based on BMU serial number.
+- Added BMU temperatures in Modbus table.
+
+---------------------------------------------------------------
+## v1.1.4
+
+- Bugfix: corrected 0x120 Modbus register behaviour.
+
+---------------------------------------------------------------
+## v1.1.3
+
+- Bugfix: corrected maximum and minimum cell voltage id.
+- Bugfix: solved problem with undesired Gateway MCU reset.
+
+---------------------------------------------------------------
+## v1.1.2
+
+- Solved bug with Modbus stability connection.
+
+---------------------------------------------------------------
+## v1.1.1
+
+- Minor improvements.
+
+---------------------------------------------------------------
+## v1.1.0
+
+- Added MQTT configuration and communication.
+
+---------------------------------------------------------------
+## v1.0.4
+
+- Minor improvements.
+
+---------------------------------------------------------------
+## v1.0.3
+
+- Improved network stability.
+
+---------------------------------------------------------------
+## v1.0.2
+
+- Solved bug with MAC configuration.
+
+---------------------------------------------------------------
+## v1.0.1
+
+- Add actuation and reset commands through Modbus.
+- Add network configuration settings: static or DHCP.
+
+---------------------------------------------------------------
+## v1.0.0
+
+- First draft with Modbus communication.
+
+---------------------------------------------------------------
