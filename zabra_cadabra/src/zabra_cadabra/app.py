@@ -10,6 +10,13 @@ def main() -> None:
         print("Zabra-Cadabra requires Windows.")
         sys.exit(1)
 
+    import ctypes
+
+    try:
+        ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("zen.zabra_cadabra")
+    except Exception:
+        pass
+
     from inventor_drawing_tool.config import load_drawing_config, save_drawing_config
     from inventor_export_tool.config import load_config, save_config
     from inventor_simplify_tool.config import load_simplify_config, save_simplify_config

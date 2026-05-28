@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import shutil
-from pathlib import Path
-
 import PyInstaller.__main__
 
 
@@ -16,11 +13,18 @@ def build() -> None:
             "--name",
             "ZabraCadabra",
             "--windowed",
+            "--onefile",
             "--noconfirm",
             "--clean",
+            "--icon",
+            "assets/Zen LOGO SMUSS.ico",
             # Bundle logo asset
             "--add-data",
             "assets/Zen LOGO SMUSS.png;.",
+            "--add-data",
+            "assets/Zen LOGO SMUSS.ico;.",
+            "--add-data",
+            "assets/usage_guide.txt;.",
             # pywin32 hidden imports
             "--hidden-import",
             "pythoncom",
@@ -61,15 +65,9 @@ def build() -> None:
             "doctest",
         ]
     )
-    # Copy usage guide into dist folder
-    dist_dir = Path("dist/ZabraCadabra")
-    usage_guide = Path("assets/usage_guide.txt")
-    if usage_guide.exists():
-        shutil.copy(usage_guide, dist_dir / "usage_guide.txt")
 
-    print("\nBuild complete: dist/ZabraCadabra/")
-    print("Folder contains ZabraCadabra.exe and supporting files.")
-    print("Zip the folder and distribute to your user.")
+    print("\nBuild complete: dist/ZabraCadabra.exe")
+    print("Single-file executable. Distribute the .exe directly.")
 
 
 if __name__ == "__main__":

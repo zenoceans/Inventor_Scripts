@@ -86,6 +86,13 @@ class ZabraApp:
         # Keep reference to prevent GC
         self._icon_img = icon_img
 
+        ico_path = self._resolve_asset("Zen LOGO SMUSS.ico")
+        if ico_path:
+            try:
+                self._root.iconbitmap(default=ico_path)
+            except Exception:
+                pass
+
     def _build_header(self) -> None:
         header = tk.Frame(self._root, bg=HEADER_BG, height=56)
         header.pack(fill="x", side="top")
@@ -104,7 +111,7 @@ class ZabraApp:
             font=("Segoe UI", 18, "bold"),
         ).pack(side="left", pady=8)
 
-        # Feedback button (right side)
+        # Feedback button (far right)
         tk.Button(
             header,
             text="Feedback",
@@ -117,6 +124,20 @@ class ZabraApp:
             cursor="hand2",
             command=self._on_feedback,
         ).pack(side="right", padx=(0, 16), pady=8)
+
+        # Guide button (to the left of Feedback)
+        tk.Button(
+            header,
+            text="Guide",
+            bg=HEADER_BG,
+            fg=HEADER_FG,
+            font=("Segoe UI", 9),
+            bd=0,
+            activebackground=HEADER_BG,
+            activeforeground="#cccccc",
+            cursor="hand2",
+            command=self._on_guide,
+        ).pack(side="right", padx=(0, 8), pady=8)
 
     def _build_notebook(self) -> None:
         self._notebook = ttk.Notebook(self._root)
@@ -143,6 +164,12 @@ class ZabraApp:
             transport=self._transport,
             error_context=error_context,
         )
+
+    def _on_guide(self) -> None:
+        from zabra_cadabra.usage_guide import UsageGuideDialog
+
+        guide_path = self._resolve_asset("usage_guide.txt")
+        UsageGuideDialog(self._root, guide_path)
 
     def _on_tab_changed(self, _event: object = None) -> None:
         try:
