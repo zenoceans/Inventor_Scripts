@@ -6,6 +6,7 @@ import logging
 import os
 import queue
 import tkinter as tk
+from dataclasses import replace
 from threading import Event, Thread
 from tkinter import filedialog, ttk
 from typing import TYPE_CHECKING
@@ -68,6 +69,30 @@ class ExportToolGUI(ttk.Frame):
         ttk.Button(out_frame, text="Browse...", command=self._browse_output).grid(row=0, column=1)
         out_frame.columnconfigure(0, weight=1)
 
+        self._prompt_folder_var = tk.BooleanVar(value=False)
+        ttk.Checkbutton(
+            out_frame,
+            text="Prompt for folder on every export",
+            variable=self._prompt_folder_var,
+            command=self._save_config,
+        ).grid(row=1, column=0, columnspan=2, sticky="w", pady=(4, 0))
+
+        # --- Naming preset ---
+        naming_frame = ttk.LabelFrame(root, text="Naming", padding=8)
+        naming_frame.pack(fill="x", **pad)
+
+        ttk.Label(naming_frame, text="Preset:").grid(row=0, column=0, sticky="w")
+        self._preset_var = tk.StringVar()
+        self._preset_combo = ttk.Combobox(
+            naming_frame, textvariable=self._preset_var, state="readonly", width=35
+        )
+        self._preset_combo.grid(row=0, column=1, sticky="ew", padx=(4, 8))
+        self._preset_combo.bind("<<ComboboxSelected>>", self._on_preset_selected)
+        ttk.Button(naming_frame, text="Manage...", command=self._on_manage_presets).grid(
+            row=0, column=2
+        )
+        naming_frame.columnconfigure(1, weight=1)
+
         # --- Export options ---
         opt_frame = ttk.LabelFrame(root, text="Export Options", padding=8)
         opt_frame.pack(fill="x", **pad)
@@ -111,12 +136,7 @@ class ExportToolGUI(ttk.Frame):
         btn_frame = ttk.Frame(root)
         btn_frame.pack(fill="x", **pad)
 
-        self._scan_btn = ttk.Button(btn_frame, text="Scan Assembly", command=self._on_scan)
-        self._scan_btn.pack(side="left", padx=(0, 8))
-
-        self._export_btn = ttk.Button(
-            btn_frame, text="Run Export", command=self._on_export, state="disabled"
-        )
+        self._export_btn = ttk.Button(btn_frame, text="Run Export", command=self._on_export)
         self._export_btn.pack(side="left", padx=(0, 8))
 
         self._cancel_btn = ttk.Button(
@@ -131,6 +151,9 @@ class ExportToolGUI(ttk.Frame):
             btn_frame, text="Open Log", command=self._on_open_log, state="disabled"
         )
         self._open_log_btn.pack(side="right", padx=(0, 8))
+
+        self._preview_btn = ttk.Button(btn_frame, text="Preview", command=self._on_preview)
+        self._preview_btn.pack(side="right", padx=(0, 8))
 
         # --- Log area ---
         log_frame = ttk.LabelFrame(root, text="Log", padding=4)
@@ -164,9 +187,6 @@ class ExportToolGUI(ttk.Frame):
         self._progress_label = ttk.Label(prog_frame, text="Ready")
         self._progress_label.pack(side="right")
 
-        # Internal state
-        self._scan_summary = None
-
     def _toggle_assembly_entry(self) -> None:
         state = "disabled" if self._use_active_var.get() else "normal"
         self._asm_entry.configure(state=state)
@@ -194,6 +214,9 @@ class ExportToolGUI(ttk.Frame):
         self._subasm_var.set(c.include_subassemblies)
         self._toplevel_var.set(c.include_top_level)
         self._suppressed_var.set(c.include_suppressed)
+        self._refresh_preset_combo()
+        self._preset_var.set(c.active_preset_name)
+        self._prompt_folder_var.set(c.prompt_folder_on_export)
 
     def _save_config(self) -> None:
         self._config.output_folder = self._output_var.get()
@@ -204,9 +227,10 @@ class ExportToolGUI(ttk.Frame):
         self._config.include_subassemblies = self._subasm_var.get()
         self._config.include_top_level = self._toplevel_var.get()
         self._config.include_suppressed = self._suppressed_var.get()
+        self._config.active_preset_name = self._preset_var.get()
+        self._config.prompt_folder_on_export = self._prompt_folder_var.get()
 
     def _get_current_config(self) -> AppConfig:
-        """Return a fresh AppConfig from current GUI state."""
         from inventor_export_tool.config import AppConfig
 
         return AppConfig(
@@ -219,6 +243,9 @@ class ExportToolGUI(ttk.Frame):
             include_top_level=self._toplevel_var.get(),
             include_suppressed=self._suppressed_var.get(),
             export_options=self._config.export_options,
+            naming_presets=self._config.naming_presets,
+            active_preset_name=self._preset_var.get(),
+            prompt_folder_on_export=self._prompt_folder_var.get(),
         )
 
     def log(self, message: str) -> None:
@@ -245,10 +272,8 @@ class ExportToolGUI(ttk.Frame):
                     else:
                         self._progress_var.set(0)
                         self._progress_label.configure(text="Ready")
-                elif msg_type == "scan_done":
-                    self._scan_summary = data
+                elif msg_type == "preview_done":
                     self._on_worker_done()
-                    self._export_btn.configure(state="normal")
                 elif msg_type == "export_done":
                     if data is not None:
                         self._last_log_path = str(data)
@@ -269,32 +294,114 @@ class ExportToolGUI(ttk.Frame):
 
     def _set_working(self, working: bool) -> None:
         state = "disabled" if working else "normal"
-        self._scan_btn.configure(state=state)
+        self._preview_btn.configure(state=state)
+        self._export_btn.configure(state=state)
         self._cancel_btn.configure(state="normal" if working else "disabled")
-        if working:
-            self._export_btn.configure(state="disabled")
 
     def _on_worker_done(self) -> None:
         self._set_working(False)
         self._worker_thread = None
 
-    def _on_scan(self) -> None:
-        if not self._output_var.get():
-            self._append_log("Please select an output folder first.")
-            return
+    def _refresh_preset_combo(self) -> None:
+        names = [p.name for p in self._config.naming_presets]
+        self._preset_combo.configure(values=names)
+        if self._config.active_preset_name in names:
+            self._preset_var.set(self._config.active_preset_name)
+        elif names:
+            self._preset_var.set(names[0])
 
-        self._scan_summary = None
-        self._export_btn.configure(state="disabled")
+    def _on_preset_selected(self, _event: object = None) -> None:
+        self._config.active_preset_name = self._preset_var.get()
+        from inventor_export_tool.config import save_config
+
+        save_config(self._config)
+
+    def _on_manage_presets(self) -> None:
+        from inventor_export_tool.naming_dialog import NamingPresetDialog
+
+        dialog = NamingPresetDialog(
+            self.winfo_toplevel(),
+            self._config.naming_presets,
+            self._config.active_preset_name,
+        )
+        if dialog.result is not None:
+            presets, active_name = dialog.result
+            self._config.naming_presets = presets
+            self._config.active_preset_name = active_name
+            from inventor_export_tool.config import save_config
+
+            save_config(self._config)
+            self._refresh_preset_combo()
+
+    def _resolve_output_folder(self) -> str | None:
+        """Return the export folder, or None if the user cancelled the picker.
+
+        - prompt_folder_on_export=True → always show picker.
+        - Output folder field is empty → show picker.
+        - Otherwise → return the current field value without prompting.
+        """
+        current = self._output_var.get().strip()
+        prompt = self._prompt_folder_var.get() or not current
+        if prompt:
+            path = filedialog.askdirectory(
+                title="Select Output Folder",
+                initialdir=current if current else os.path.expanduser("~"),
+            )
+            return path if path else None
+        return current
+
+    def _on_export(self) -> None:
+        folder = self._resolve_output_folder()
+        if folder is None:
+            return
+        self._output_var.set(folder)
+        self._save_config()
+        self._set_working(True)
+        self._cancel_event.clear()
+        self._progress_var.set(0)
+        self._progress_label.configure(text="Exporting...")
+        config = self._get_current_config()
+        self._worker_thread = Thread(
+            target=self._export_worker, args=(config, folder), daemon=True
+        )
+        self._worker_thread.start()
+
+    def _export_worker(self, config: AppConfig, output_folder: str) -> None:
+        from inventor_api._com_threading import com_thread_scope
+        from inventor_export_tool.orchestrator import ExportOrchestrator
+
+        try:
+            with com_thread_scope():
+                config = replace(config, output_folder=output_folder)
+                orch = ExportOrchestrator(
+                    config=config,
+                    progress_callback=self.set_progress,
+                    log_callback=self.log,
+                )
+                summary = orch.scan(output_folder=output_folder)
+                orch.export(summary, self._cancel_event)
+                self._queue.put(("export_done", orch.last_log_path))
+        except Exception as e:
+            logging.getLogger(__name__).exception("Worker thread failed")
+            self._queue.put(("error", str(e)))
+
+    def _on_preview(self) -> None:
+        folder = self._resolve_output_folder()
+        if folder is None:
+            return
+        self._output_var.set(folder)
+        self._save_config()
         self._set_working(True)
         self._cancel_event.clear()
         self._progress_var.set(0)
         self._progress_label.configure(text="Scanning...")
-
         config = self._get_current_config()
-        self._worker_thread = Thread(target=self._scan_worker, args=(config,), daemon=True)
+        self._worker_thread = Thread(
+            target=self._preview_worker, args=(config, folder), daemon=True
+        )
         self._worker_thread.start()
 
-    def _scan_worker(self, config: AppConfig) -> None:
+    def _preview_worker(self, config: AppConfig, output_folder: str) -> None:
         from inventor_api._com_threading import com_thread_scope
         from inventor_export_tool.orchestrator import ExportOrchestrator
 
@@ -305,49 +412,8 @@ class ExportToolGUI(ttk.Frame):
                     progress_callback=self.set_progress,
                     log_callback=self.log,
                 )
-                summary = orch.scan()
-                self._queue.put(("scan_done", (summary, orch)))
-        except Exception as e:
-            logging.getLogger(__name__).exception("Worker thread failed")
-            self._queue.put(("error", str(e)))
-
-    def _on_export(self) -> None:
-        if self._scan_summary is None:
-            self._append_log("Run scan first.")
-            return
-
-        summary, orch = self._scan_summary
-        self._set_working(True)
-        self._cancel_event.clear()
-        self._progress_var.set(0)
-        self._progress_label.configure(text="Exporting...")
-
-        self._worker_thread = Thread(target=self._export_worker, args=(orch, summary), daemon=True)
-        self._worker_thread.start()
-
-    def _export_worker(self, orch, summary) -> None:
-        from inventor_api._com_threading import com_thread_scope
-
-        try:
-            # Note: orch already has a COM connection from scan.
-            # But since we're on a new thread, we need a new COM scope.
-            # Actually, scan and export should share the same COM thread.
-            # Let's restructure: scan_worker stores the orch, and export_worker
-            # creates a new COM scope and reconnects.
-            with com_thread_scope():
-                from inventor_export_tool.orchestrator import ExportOrchestrator
-
-                # Reconnect since we're on a new thread
-                config = self._get_current_config()
-                orch = ExportOrchestrator(
-                    config=config,
-                    progress_callback=self.set_progress,
-                    log_callback=self.log,
-                )
-                # Re-scan quickly (we need the COM connection)
-                new_summary = orch.scan()
-                orch.export(new_summary, self._cancel_event)
-                self._queue.put(("export_done", orch.last_log_path))
+                summary = orch.scan(output_folder=output_folder)
+                self._queue.put(("preview_done", summary))
         except Exception as e:
             logging.getLogger(__name__).exception("Worker thread failed")
             self._queue.put(("error", str(e)))
