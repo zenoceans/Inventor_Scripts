@@ -1,4 +1,4 @@
-"""Filename sanitization and composition utilities."""
+"""Filename sanitization and IDW-finding utilities."""
 
 from __future__ import annotations
 
@@ -17,20 +17,6 @@ def sanitize_filename(name: str) -> str:
     return sanitized if sanitized else "_"
 
 
-def compose_filename(display_name: str, revision: str, extension: str) -> str:
-    """Compose export filename: 'Bracket', 'B', 'step' -> 'Bracket-B.step'.
-
-    Empty or whitespace-only revision becomes 'NoRev'.
-    Extension should not include the dot.
-    """
-    rev = revision.strip() if revision else ""
-    if not rev:
-        rev = "NoRev"
-    name = sanitize_filename(display_name)
-    rev = sanitize_filename(rev)
-    return f"{name}-{rev}.{extension}"
-
-
 def find_idw_path(source_path: str) -> str | None:
     """Find the co-located .idw file for an .ipt or .iam file.
 
@@ -41,7 +27,6 @@ def find_idw_path(source_path: str) -> str | None:
     idw_path = base + ".idw"
     if os.path.exists(idw_path):
         return idw_path
-    # Try uppercase extension
     idw_path_upper = base + ".IDW"
     if os.path.exists(idw_path_upper):
         return idw_path_upper

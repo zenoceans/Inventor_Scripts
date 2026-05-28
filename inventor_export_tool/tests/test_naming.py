@@ -4,7 +4,6 @@ import os
 
 from inventor_export_tool.models import ComponentInfo, ExportItem
 from inventor_export_tool.naming import (
-    compose_filename,
     find_idw_path,
     is_content_center_path,
     resolve_duplicates,
@@ -36,31 +35,6 @@ class TestSanitizeFilename:
 
     def test_null_bytes_removed(self):
         assert sanitize_filename("part\x00name") == "part_name"
-
-
-class TestComposeFilename:
-    def test_normal(self):
-        assert compose_filename("Bracket", "B", "step") == "Bracket-B.step"
-
-    def test_numeric_revision(self):
-        assert compose_filename("Housing", "3", "dwg") == "Housing-3.dwg"
-
-    def test_empty_revision(self):
-        assert compose_filename("Shaft", "", "step") == "Shaft-NoRev.step"
-
-    def test_whitespace_revision(self):
-        assert compose_filename("Shaft", "  ", "step") == "Shaft-NoRev.step"
-
-    def test_none_revision(self):
-        assert compose_filename("Shaft", None, "step") == "Shaft-NoRev.step"
-
-    def test_revision_with_special_chars(self):
-        result = compose_filename("Part", "Rev:2", "pdf")
-        assert result == "Part-Rev_2.pdf"
-
-    def test_name_with_special_chars(self):
-        result = compose_filename("Part<1>", "A", "step")
-        assert result == "Part_1_-A.step"
 
 
 class TestFindIdwPath:
