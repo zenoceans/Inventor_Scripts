@@ -20,3 +20,5 @@ logs/
 User_testing_files/
 .worktrees/
 .superpowers/
+claude-tools/
+docs/User_feedback/
