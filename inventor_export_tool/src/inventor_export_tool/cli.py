@@ -16,13 +16,19 @@ def main() -> None:
     parser.add_argument(
         "--output-dir",
         metavar="DIR",
-        help="Output directory (defaults to --input-dir if omitted)",
+        help="Output directory (defaults to config value if omitted)",
     )
     parser.add_argument(
         "--formats",
         default="step",
         metavar="FORMATS",
         help="Comma-separated export formats: step, pdf, dwg (default: step)",
+    )
+    parser.add_argument(
+        "--preset",
+        metavar="NAME",
+        default=None,
+        help="Name of a naming preset from config. Defaults to the active preset.",
     )
     args = parser.parse_args()
 
@@ -42,6 +48,16 @@ def main() -> None:
     config.export_step = "step" in formats
     config.export_dwg = "dwg" in formats
     config.export_pdf = "pdf" in formats
+
+    if args.preset is not None:
+        preset_names = [p.name for p in config.naming_presets]
+        if args.preset not in preset_names:
+            print(
+                f"ERROR: Preset '{args.preset}' not found. Available: {', '.join(preset_names)}",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        config.active_preset_name = args.preset
 
     def log(msg: str) -> None:
         print(msg)
