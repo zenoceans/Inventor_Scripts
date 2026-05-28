@@ -9,6 +9,7 @@ from pathlib import Path
 from threading import Event
 
 from inventor_api import InventorApp, InventorDocument
+from inventor_api._vault_dialog_suppressor import vault_dialog_suppressor
 from inventor_api.exceptions import ExportError, InventorError
 from inventor_api.exporters import export_drawing, export_step
 from inventor_api.traversal import DiscoveredComponent, walk_assembly
@@ -45,6 +46,19 @@ def _to_component_info(comp: DiscoveredComponent) -> ComponentInfo:
     )
 
 
+def _normalize_prefixes(prefixes: list[str]) -> list[str]:
+    """Strip whitespace and drop empty entries; lowercase for case-insensitive match."""
+    return [p.strip().lower() for p in prefixes if p and p.strip()]
+
+
+def _matches_excluded_prefix(display_name: str, normalized_prefixes: list[str]) -> bool:
+    """True if display_name starts with any of the (already-normalized) prefixes."""
+    if not normalized_prefixes:
+        return False
+    name_lower = display_name.lower()
+    return any(name_lower.startswith(p) for p in normalized_prefixes)
+
+
 def _build_export_items(
     components: list[ComponentInfo],
     config: AppConfig,
@@ -54,6 +68,7 @@ def _build_export_items(
     """Build the list of ExportItems based on config and active naming preset."""
     preset = config.active_preset()
     items: list[ExportItem] = []
+    excluded_prefixes = _normalize_prefixes(config.excluded_filename_prefixes)
 
     for comp in components:
         if comp.is_top_level and not config.include_top_level:
@@ -65,6 +80,8 @@ def _build_export_items(
         ):
             continue
         if comp.document_type == "part" and not config.include_parts:
+            continue
+        if _matches_excluded_prefix(comp.display_name, excluded_prefixes):
             continue
 
         # Render base name once per component
@@ -148,6 +165,10 @@ class ExportOrchestrator(BaseOrchestrator):
 
         Must be called from a thread with COM initialized (use com_thread_scope).
         """
+        with vault_dialog_suppressor(on_dismiss=self._emit):
+            return self._scan_impl(output_folder)
+
+    def _scan_impl(self, output_folder: str | None) -> ScanSummary:
         self._emit("Connecting to Inventor...")
         self._app = InventorApp.connect()
 
@@ -174,8 +195,19 @@ class ExportOrchestrator(BaseOrchestrator):
 
         # Convert to ComponentInfo
         components = [_to_component_info(c) for c in discovered]
+
+        # Count prefix-excluded for reporting (filter is applied in _build_export_items).
+        normalized_prefixes = _normalize_prefixes(self._config.excluded_filename_prefixes)
+        prefix_excluded_count = sum(
+            1 for c in components if _matches_excluded_prefix(c.display_name, normalized_prefixes)
+        )
+
+        prefix_note = (
+            f", {prefix_excluded_count} excluded by prefix" if normalized_prefixes else ""
+        )
         self._emit(
-            f"Found {len(components)} components ({content_center_count} Content Center excluded)"
+            f"Found {len(components)} components "
+            f"({content_center_count} Content Center excluded{prefix_note})"
         )
 
         # Build export items
@@ -198,6 +230,7 @@ class ExportOrchestrator(BaseOrchestrator):
             total_components=all_count,
             content_center_excluded=content_center_count,
             suppressed_excluded=suppressed_count,
+            prefix_excluded=prefix_excluded_count,
             export_items=items,
             warnings=warnings,
         )
@@ -210,6 +243,7 @@ class ExportOrchestrator(BaseOrchestrator):
                     "components": all_count,
                     "export_items": len(items),
                     "content_center_excluded": content_center_count,
+                    "prefix_excluded": prefix_excluded_count,
                 }
             },
         )
@@ -240,6 +274,15 @@ class ExportOrchestrator(BaseOrchestrator):
         if self._app is None:
             raise InventorError("Must call scan() before export()")
 
+        with vault_dialog_suppressor(on_dismiss=self._emit):
+            return self._export_impl(summary, cancel_event)
+
+    def _export_impl(
+        self,
+        summary: ScanSummary,
+        cancel_event: Event | None,
+    ) -> list[ExportResult]:
+        assert self._app is not None
         results: list[ExportResult] = []
         total = len(summary.export_items)
 

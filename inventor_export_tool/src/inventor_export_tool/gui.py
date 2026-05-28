@@ -132,6 +132,20 @@ class ExportToolGUI(ttk.Frame):
             inc_frame, text="Suppressed components", variable=self._suppressed_var
         ).grid(row=1, column=0, columnspan=3, sticky="w", pady=(4, 0))
 
+        ttk.Label(inc_frame, text="Exclude name prefix(es):").grid(
+            row=2, column=0, sticky="w", pady=(6, 0)
+        )
+        self._excluded_prefixes_var = tk.StringVar()
+        ttk.Entry(inc_frame, textvariable=self._excluded_prefixes_var).grid(
+            row=2, column=1, columnspan=2, sticky="ew", pady=(6, 0)
+        )
+        ttk.Label(
+            inc_frame,
+            text="Comma-separated; case-insensitive (e.g. DIN, ISO, 2, 3)",
+            foreground="#666666",
+        ).grid(row=3, column=1, columnspan=2, sticky="w")
+        inc_frame.columnconfigure(1, weight=1)
+
         # --- Action buttons ---
         btn_frame = ttk.Frame(root)
         btn_frame.pack(fill="x", **pad)
@@ -214,6 +228,7 @@ class ExportToolGUI(ttk.Frame):
         self._subasm_var.set(c.include_subassemblies)
         self._toplevel_var.set(c.include_top_level)
         self._suppressed_var.set(c.include_suppressed)
+        self._excluded_prefixes_var.set(", ".join(c.excluded_filename_prefixes))
         self._refresh_preset_combo()
         self._preset_var.set(c.active_preset_name)
         self._prompt_folder_var.set(c.prompt_folder_on_export)
@@ -227,8 +242,13 @@ class ExportToolGUI(ttk.Frame):
         self._config.include_subassemblies = self._subasm_var.get()
         self._config.include_top_level = self._toplevel_var.get()
         self._config.include_suppressed = self._suppressed_var.get()
+        self._config.excluded_filename_prefixes = self._parse_excluded_prefixes()
         self._config.active_preset_name = self._preset_var.get()
         self._config.prompt_folder_on_export = self._prompt_folder_var.get()
+
+    def _parse_excluded_prefixes(self) -> list[str]:
+        raw = self._excluded_prefixes_var.get()
+        return [p.strip() for p in raw.split(",") if p.strip()]
 
     def _get_current_config(self) -> AppConfig:
         from inventor_export_tool.config import AppConfig
@@ -242,6 +262,7 @@ class ExportToolGUI(ttk.Frame):
             include_subassemblies=self._subasm_var.get(),
             include_top_level=self._toplevel_var.get(),
             include_suppressed=self._suppressed_var.get(),
+            excluded_filename_prefixes=self._parse_excluded_prefixes(),
             export_options=self._config.export_options,
             naming_presets=self._config.naming_presets,
             active_preset_name=self._preset_var.get(),

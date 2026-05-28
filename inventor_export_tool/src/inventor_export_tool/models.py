@@ -46,5 +46,6 @@ class ScanSummary:
     total_components: int
     content_center_excluded: int
     suppressed_excluded: int
+    prefix_excluded: int = 0
     export_items: list[ExportItem] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)

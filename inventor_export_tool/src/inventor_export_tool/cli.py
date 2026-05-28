@@ -30,6 +30,15 @@ def main() -> None:
         default=None,
         help="Name of a naming preset from config. Defaults to the active preset.",
     )
+    parser.add_argument(
+        "--exclude-prefixes",
+        metavar="PREFIXES",
+        default=None,
+        help=(
+            "Comma-separated filename prefixes to exclude "
+            "(case-insensitive, e.g. 'DIN,ISO,2,3'). Overrides the config value."
+        ),
+    )
     args = parser.parse_args()
 
     formats = {f.strip().lower() for f in args.formats.split(",")}
@@ -58,6 +67,11 @@ def main() -> None:
             )
             sys.exit(1)
         config.active_preset_name = args.preset
+
+    if args.exclude_prefixes is not None:
+        config.excluded_filename_prefixes = [
+            p.strip() for p in args.exclude_prefixes.split(",") if p.strip()
+        ]
 
     def log(msg: str) -> None:
         print(msg)

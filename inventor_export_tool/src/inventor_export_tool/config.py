@@ -33,6 +33,7 @@ class AppConfig:
     include_subassemblies: bool = True
     include_top_level: bool = True
     include_suppressed: bool = False
+    excluded_filename_prefixes: list[str] = field(default_factory=list)
     export_options: dict[str, dict[str, Any]] = field(default_factory=dict)
     naming_presets: list[NamingPreset] = field(
         default_factory=lambda: [NamingPreset(_DEFAULT_PRESET_NAME, _DEFAULT_PRESET_TEMPLATE)]
@@ -76,6 +77,7 @@ def load_config(path: Path | None = None) -> AppConfig:
         "include_subassemblies",
         "include_top_level",
         "include_suppressed",
+        "excluded_filename_prefixes",
         "export_options",
         "active_preset_name",
         "prompt_folder_on_export",

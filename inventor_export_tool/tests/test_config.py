@@ -114,6 +114,25 @@ class TestExportOptions:
         assert c.export_options.get("dwg") is None
 
 
+class TestExcludedFilenamePrefixes:
+    def test_default_is_empty_list(self):
+        c = AppConfig()
+        assert c.excluded_filename_prefixes == []
+
+    def test_round_trip(self, tmp_path):
+        path = tmp_path / "config.json"
+        original = AppConfig(excluded_filename_prefixes=["DIN", "ISO", "2", "3"])
+        save_config(original, path)
+        loaded = load_config(path)
+        assert loaded.excluded_filename_prefixes == ["DIN", "ISO", "2", "3"]
+
+    def test_missing_key_defaults_to_empty(self, tmp_path):
+        path = tmp_path / "config.json"
+        path.write_text('{"output_folder": "X"}', encoding="utf-8")
+        loaded = load_config(path)
+        assert loaded.excluded_filename_prefixes == []
+
+
 class TestNamingPreset:
     def test_default_fields(self):
         p = NamingPreset(name="OleM Default", template="{Part Number} - {Description}")
