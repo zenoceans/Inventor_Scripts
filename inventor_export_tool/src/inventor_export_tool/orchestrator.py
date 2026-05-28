@@ -18,10 +18,11 @@ from inventor_export_tool.config import AppConfig
 from inventor_export_tool.export_log import ExportLogger
 from inventor_export_tool.models import ComponentInfo, ExportItem, ExportResult, ScanSummary
 from inventor_export_tool.naming import (
-    compose_filename,
     find_idw_path,
     resolve_duplicates,
+    sanitize_filename,
 )
+from inventor_export_tool.templates import render_template
 from inventor_utils.base_orchestrator import BaseOrchestrator, LogCallback, ProgressCallback
 
 _tel = logging.getLogger("zabra.export")
@@ -48,12 +49,13 @@ def _build_export_items(
     components: list[ComponentInfo],
     config: AppConfig,
     output_folder: str,
+    doc_cache: dict[str, "InventorDocument"],
 ) -> list[ExportItem]:
-    """Build the list of ExportItems based on config settings."""
+    """Build the list of ExportItems based on config and active naming preset."""
+    preset = config.active_preset()
     items: list[ExportItem] = []
 
     for comp in components:
-        # Filter by component type
         if comp.is_top_level and not config.include_top_level:
             continue
         if (
@@ -65,9 +67,15 @@ def _build_export_items(
         if comp.document_type == "part" and not config.include_parts:
             continue
 
-        # STEP export
+        # Render base name once per component
+        doc = doc_cache.get(comp.source_path)
+        if doc is not None:
+            base_name = render_template(preset.template, doc, fallback_filename=comp.display_name)
+        else:
+            base_name = sanitize_filename(comp.display_name)
+
         if config.export_step:
-            filename = compose_filename(comp.display_name, comp.revision, "step")
+            filename = f"{base_name}.step"
             items.append(
                 ExportItem(
                     component=comp,
@@ -77,10 +85,9 @@ def _build_export_items(
                 )
             )
 
-        # DWG/PDF from IDW
         if comp.idw_path:
             if config.export_dwg:
-                filename = compose_filename(comp.display_name, comp.revision, "dwg")
+                filename = f"{base_name}.dwg"
                 items.append(
                     ExportItem(
                         component=comp,
@@ -90,7 +97,7 @@ def _build_export_items(
                     )
                 )
             if config.export_pdf:
-                filename = compose_filename(comp.display_name, comp.revision, "pdf")
+                filename = f"{base_name}.pdf"
                 items.append(
                     ExportItem(
                         component=comp,
@@ -132,8 +139,12 @@ class ExportOrchestrator(BaseOrchestrator):
         _tel.info(msg)
         self._log_cb(msg)
 
-    def scan(self) -> ScanSummary:
+    def scan(self, output_folder: str | None = None) -> ScanSummary:
         """Connect to Inventor, walk the assembly tree, and build an export plan.
+
+        Args:
+            output_folder: Override the config output folder for naming/path generation.
+                           If None, uses self._config.output_folder.
 
         Must be called from a thread with COM initialized (use com_thread_scope).
         """
@@ -168,7 +179,10 @@ class ExportOrchestrator(BaseOrchestrator):
         )
 
         # Build export items
-        items = _build_export_items(components, self._config, self._config.output_folder)
+        effective_folder = (
+            output_folder if output_folder is not None else self._config.output_folder
+        )
+        items = _build_export_items(components, self._config, effective_folder, self._doc_cache)
 
         # Resolve duplicate filenames
         warnings: list[str] = []
