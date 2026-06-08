@@ -38,6 +38,10 @@ class InventorNotAssemblyError(InventorError):
     """Active document is not an assembly."""
 
 
+class InventorNotPartOrAssemblyError(InventorError):
+    """Active document is neither a part nor an assembly."""
+
+
 class DocumentOpenError(InventorError):
     """Failed to open an Inventor document."""
 

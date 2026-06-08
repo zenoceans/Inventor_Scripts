@@ -10,6 +10,7 @@ from threading import Event
 
 from inventor_api import InventorApp, InventorDocument
 from inventor_api._vault_dialog_suppressor import vault_dialog_suppressor
+from inventor_api.document import AssemblyDocument
 from inventor_api.exceptions import ExportError, InventorError
 from inventor_api.exporters import export_drawing, export_step
 from inventor_api.traversal import DiscoveredComponent, walk_assembly
@@ -64,6 +65,7 @@ def _build_export_items(
     config: AppConfig,
     output_folder: str,
     doc_cache: dict[str, "InventorDocument"],
+    single_part: bool = False,
 ) -> list[ExportItem]:
     """Build the list of ExportItems based on config and active naming preset."""
     preset = config.active_preset()
@@ -71,18 +73,19 @@ def _build_export_items(
     excluded_prefixes = _normalize_prefixes(config.excluded_filename_prefixes)
 
     for comp in components:
-        if comp.is_top_level and not config.include_top_level:
-            continue
-        if (
-            comp.document_type == "assembly"
-            and not comp.is_top_level
-            and not config.include_subassemblies
-        ):
-            continue
-        if comp.document_type == "part" and not config.include_parts:
-            continue
-        if _matches_excluded_prefix(comp.display_name, excluded_prefixes):
-            continue
+        if not single_part:
+            if comp.is_top_level and not config.include_top_level:
+                continue
+            if (
+                comp.document_type == "assembly"
+                and not comp.is_top_level
+                and not config.include_subassemblies
+            ):
+                continue
+            if comp.document_type == "part" and not config.include_parts:
+                continue
+            if _matches_excluded_prefix(comp.display_name, excluded_prefixes):
+                continue
 
         # Render base name once per component
         doc = doc_cache.get(comp.source_path)
@@ -172,17 +175,22 @@ class ExportOrchestrator(BaseOrchestrator):
         self._emit("Connecting to Inventor...")
         self._app = InventorApp.connect()
 
-        self._emit("Getting active assembly...")
-        assembly = self._app.get_active_assembly()
-        self._assembly_name = assembly.display_name
-        self._assembly_path = assembly.full_path
-        self._emit(f"Assembly: {self._assembly_name}")
+        self._emit("Getting active assembly or part...")
+        doc = self._app.get_active_part_or_assembly()
+        self._assembly_name = doc.display_name
+        self._assembly_path = doc.full_path
+        self._emit(f"Document: {self._assembly_name}")
 
-        self._emit("Scanning assembly tree...")
-        discovered = walk_assembly(
-            assembly,
-            include_suppressed=self._config.include_suppressed,
-        )
+        self._emit("Scanning document...")
+        if isinstance(doc, AssemblyDocument):
+            discovered = walk_assembly(
+                doc,
+                include_suppressed=self._config.include_suppressed,
+            )
+            single_part = False
+        else:
+            discovered = [DiscoveredComponent(document=doc, is_top_level=True, depth=0)]
+            single_part = True
 
         # Count excluded items
         all_count = len(discovered)
@@ -214,7 +222,9 @@ class ExportOrchestrator(BaseOrchestrator):
         effective_folder = (
             output_folder if output_folder is not None else self._config.output_folder
         )
-        items = _build_export_items(components, self._config, effective_folder, self._doc_cache)
+        items = _build_export_items(
+            components, self._config, effective_folder, self._doc_cache, single_part=single_part
+        )
 
         # Resolve duplicate filenames
         warnings: list[str] = []

@@ -217,3 +217,70 @@ class TestLoadConfigMigration:
         assert loaded.naming_presets[1].name == "Short"
         assert loaded.active_preset_name == "Short"
         assert loaded.prompt_folder_on_export is True
+
+
+def test_config_round_trips_folder_default_mode(tmp_path):
+    from inventor_export_tool.config import (
+        AppConfig,
+        FolderDefaultMode,
+        load_config,
+        save_config,
+    )
+
+    path = tmp_path / "config.json"
+    cfg = AppConfig(folder_default_mode=FolderDefaultMode.WINDOWS_RECENT)
+    save_config(cfg, path)
+
+    loaded = load_config(path)
+
+    assert loaded.folder_default_mode == FolderDefaultMode.WINDOWS_RECENT
+
+
+def test_load_config_defaults_mode_when_missing(tmp_path):
+    from inventor_export_tool.config import FolderDefaultMode, load_config
+
+    path = tmp_path / "config.json"
+    path.write_text('{"output_folder": "C:/x"}', encoding="utf-8")
+
+    loaded = load_config(path)
+
+    assert loaded.folder_default_mode == FolderDefaultMode.LAST_EXPORT
+
+
+def test_load_config_tolerates_unknown_mode(tmp_path):
+    from inventor_export_tool.config import FolderDefaultMode, load_config
+
+    path = tmp_path / "config.json"
+    path.write_text('{"folder_default_mode": "bogus"}', encoding="utf-8")
+
+    loaded = load_config(path)
+
+    assert loaded.folder_default_mode == FolderDefaultMode.LAST_EXPORT
+
+
+def test_pick_initialdir_field_value_wins(tmp_path):
+    from inventor_export_tool.config import FolderDefaultMode, pick_initialdir
+
+    got = pick_initialdir(" C:/typed ", FolderDefaultMode.WINDOWS_RECENT, "C:/last", "C:/recent")
+    assert got == "C:/typed"
+
+
+def test_pick_initialdir_windows_recent_mode():
+    from inventor_export_tool.config import FolderDefaultMode, pick_initialdir
+
+    got = pick_initialdir("", FolderDefaultMode.WINDOWS_RECENT, "C:/last", "C:/recent")
+    assert got == "C:/recent"
+
+
+def test_pick_initialdir_windows_recent_falls_back_to_last_export():
+    from inventor_export_tool.config import FolderDefaultMode, pick_initialdir
+
+    got = pick_initialdir("", FolderDefaultMode.WINDOWS_RECENT, "C:/last", None)
+    assert got == "C:/last"
+
+
+def test_pick_initialdir_last_export_mode():
+    from inventor_export_tool.config import FolderDefaultMode, pick_initialdir
+
+    got = pick_initialdir("", FolderDefaultMode.LAST_EXPORT, "C:/last", "C:/recent")
+    assert got == "C:/last"

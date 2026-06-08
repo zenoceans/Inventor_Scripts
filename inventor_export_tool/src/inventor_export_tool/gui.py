@@ -11,6 +11,9 @@ from threading import Event, Thread
 from tkinter import filedialog, ttk
 from typing import TYPE_CHECKING
 
+from inventor_export_tool.config import FolderDefaultMode, pick_initialdir
+from inventor_utils.recent_folders import get_last_used_folder
+
 if TYPE_CHECKING:
     from inventor_export_tool.config import AppConfig
 
@@ -27,6 +30,7 @@ class ExportToolGUI(ttk.Frame):
         self._cancel_event = Event()
         self._worker_thread: Thread | None = None
         self._last_log_path: str | None = None
+        self._folder_mode: FolderDefaultMode = FolderDefaultMode.LAST_EXPORT
 
         self._build_ui()
         self._load_config()
@@ -67,6 +71,10 @@ class ExportToolGUI(ttk.Frame):
             row=0, column=0, sticky="ew", padx=(0, 4)
         )
         ttk.Button(out_frame, text="Browse...", command=self._browse_output).grid(row=0, column=1)
+        self._folder_mode_btn = ttk.Button(
+            out_frame, text="Default folder: Last export", command=self._toggle_folder_mode
+        )
+        self._folder_mode_btn.grid(row=0, column=2, padx=(4, 0))
         out_frame.columnconfigure(0, weight=1)
 
         self._prompt_folder_var = tk.BooleanVar(value=False)
@@ -213,8 +221,37 @@ class ExportToolGUI(ttk.Frame):
         if path:
             self._asm_path_var.set(path)
 
+    def _toggle_folder_mode(self) -> None:
+        self._folder_mode = (
+            FolderDefaultMode.WINDOWS_RECENT
+            if self._folder_mode == FolderDefaultMode.LAST_EXPORT
+            else FolderDefaultMode.LAST_EXPORT
+        )
+        self._update_folder_mode_button()
+        self._save_config()
+
+    def _update_folder_mode_button(self) -> None:
+        label = (
+            "Default folder: Windows recent"
+            if self._folder_mode == FolderDefaultMode.WINDOWS_RECENT
+            else "Default folder: Last export"
+        )
+        self._folder_mode_btn.configure(text=label)
+
+    def _picker_initialdir(self) -> str:
+        recent = (
+            get_last_used_folder()
+            if self._folder_mode == FolderDefaultMode.WINDOWS_RECENT
+            else None
+        )
+        return pick_initialdir(
+            self._output_var.get(), self._folder_mode, self._config.output_folder, recent
+        )
+
     def _browse_output(self) -> None:
-        path = filedialog.askdirectory(title="Select Output Folder")
+        path = filedialog.askdirectory(
+            title="Select Output Folder", initialdir=self._picker_initialdir()
+        )
         if path:
             self._output_var.set(path)
 
@@ -232,6 +269,8 @@ class ExportToolGUI(ttk.Frame):
         self._refresh_preset_combo()
         self._preset_var.set(c.active_preset_name)
         self._prompt_folder_var.set(c.prompt_folder_on_export)
+        self._folder_mode = c.folder_default_mode
+        self._update_folder_mode_button()
 
     def _save_config(self) -> None:
         self._config.output_folder = self._output_var.get()
@@ -245,6 +284,7 @@ class ExportToolGUI(ttk.Frame):
         self._config.excluded_filename_prefixes = self._parse_excluded_prefixes()
         self._config.active_preset_name = self._preset_var.get()
         self._config.prompt_folder_on_export = self._prompt_folder_var.get()
+        self._config.folder_default_mode = self._folder_mode
 
     def _parse_excluded_prefixes(self) -> list[str]:
         raw = self._excluded_prefixes_var.get()
@@ -267,6 +307,7 @@ class ExportToolGUI(ttk.Frame):
             naming_presets=self._config.naming_presets,
             active_preset_name=self._preset_var.get(),
             prompt_folder_on_export=self._prompt_folder_var.get(),
+            folder_default_mode=self._folder_mode,
         )
 
     def log(self, message: str) -> None:
@@ -366,7 +407,7 @@ class ExportToolGUI(ttk.Frame):
         if prompt:
             path = filedialog.askdirectory(
                 title="Select Output Folder",
-                initialdir=current if current else os.path.expanduser("~"),
+                initialdir=self._picker_initialdir(),
             )
             return path if path else None
         return current

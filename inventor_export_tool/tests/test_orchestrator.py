@@ -189,3 +189,32 @@ class TestExcludedFilenamePrefixes:
         )
         items = _build_export_items([comp], config, r"C:\out", doc_cache)
         assert len(items) == 1
+
+
+def test_build_export_items_single_part_ignores_inclusion_filters():
+    from inventor_export_tool.config import AppConfig
+    from inventor_export_tool.models import ComponentInfo
+    from inventor_export_tool.orchestrator import _build_export_items
+
+    comp = ComponentInfo(
+        source_path=r"C:\Projects\P-100089.ipt",
+        display_name="P-100089",
+        document_type="part",
+        revision="A",
+        is_top_level=True,
+        idw_path=None,
+    )
+    # Filters that would normally drop a top-level part:
+    config = AppConfig(
+        include_parts=False,
+        include_top_level=False,
+        export_step=True,
+        export_dwg=False,
+        export_pdf=False,
+    )
+
+    items = _build_export_items([comp], config, r"C:\out", {}, single_part=True)
+
+    assert len(items) == 1
+    assert items[0].export_type == "step"
+    assert items[0].output_filename.endswith(".step")
