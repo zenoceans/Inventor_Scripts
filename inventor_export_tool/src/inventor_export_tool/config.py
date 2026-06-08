@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +13,13 @@ from inventor_utils.config import get_config_path, save_dataclass_config
 
 _DEFAULT_PRESET_NAME = "OleM Default"
 _DEFAULT_PRESET_TEMPLATE = "{Part Number} - {Description} - Rev{Revision Number}"
+
+
+class FolderDefaultMode(str, Enum):
+    """Where the output-folder picker's initial directory comes from."""
+
+    LAST_EXPORT = "last_export"
+    WINDOWS_RECENT = "windows_recent"
 
 
 @dataclass
@@ -40,6 +49,7 @@ class AppConfig:
     )
     active_preset_name: str = _DEFAULT_PRESET_NAME
     prompt_folder_on_export: bool = False
+    folder_default_mode: FolderDefaultMode = FolderDefaultMode.LAST_EXPORT
 
     def active_preset(self) -> NamingPreset:
         """Return the active preset, falling back to the first preset if the name is invalid."""
@@ -81,6 +91,7 @@ def load_config(path: Path | None = None) -> AppConfig:
         "export_options",
         "active_preset_name",
         "prompt_folder_on_export",
+        "folder_default_mode",
     }
     kwargs: dict[str, Any] = {k: v for k, v in data.items() if k in scalar_fields}
 
@@ -96,6 +107,13 @@ def load_config(path: Path | None = None) -> AppConfig:
         kwargs["naming_presets"] = presets if presets else _default_presets()
     else:
         kwargs["naming_presets"] = _default_presets()
+
+    raw_mode = kwargs.get("folder_default_mode")
+    if raw_mode is not None:
+        try:
+            kwargs["folder_default_mode"] = FolderDefaultMode(raw_mode)
+        except ValueError:
+            kwargs.pop("folder_default_mode")
 
     try:
         config = AppConfig(**kwargs)
@@ -119,3 +137,30 @@ def save_config(config: AppConfig, path: Path | None = None) -> None:
     if path is None:
         path = get_config_path("config.json")
     save_dataclass_config(config, path)
+
+
+def pick_initialdir(
+    field_value: str,
+    mode: FolderDefaultMode,
+    last_export_folder: str,
+    windows_recent: str | None,
+) -> str:
+    """Choose the folder picker's initial directory.
+
+    A non-empty current field value always wins. Otherwise the mode decides:
+    WINDOWS_RECENT prefers the OS last-used folder (falling back to the last
+    export folder), LAST_EXPORT uses the last export folder. Empty everywhere
+    falls back to the user's home directory.
+    """
+    field_value = field_value.strip()
+    if field_value:
+        return field_value
+    if mode == FolderDefaultMode.WINDOWS_RECENT:
+        if windows_recent:
+            return windows_recent
+        if last_export_folder:
+            return last_export_folder
+        return os.path.expanduser("~")
+    if last_export_folder:
+        return last_export_folder
+    return os.path.expanduser("~")
