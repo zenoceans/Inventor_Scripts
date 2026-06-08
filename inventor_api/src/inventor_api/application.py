@@ -8,6 +8,7 @@ from inventor_api.document import AssemblyDocument, InventorDocument
 from inventor_api.exceptions import (
     DocumentOpenError,
     InventorNotAssemblyError,
+    InventorNotPartOrAssemblyError,
     InventorNotRunningError,
 )
 from inventor_api.types import DocumentType
@@ -116,6 +117,27 @@ class InventorApp:
                 f"(type: {doc.document_type.name})."
             )
         return doc
+
+    def get_active_part_or_assembly(self) -> AssemblyDocument | InventorDocument:
+        """Get the active document, accepting an assembly or a part.
+
+        Returns:
+            The AssemblyDocument for an assembly, or the base InventorDocument
+            for a part.
+
+        Raises:
+            InventorNotPartOrAssemblyError: If the active document is neither a
+                part nor an assembly (e.g. a drawing).
+        """
+        doc = self.active_document
+        if isinstance(doc, AssemblyDocument):
+            return doc
+        if doc.document_type == DocumentType.PART:
+            return doc
+        raise InventorNotPartOrAssemblyError(
+            f"Active document '{doc.display_name}' is neither a part nor an "
+            f"assembly (type: {doc.document_type.name})."
+        )
 
     def open_document(self, path: str, visible: bool = False) -> InventorDocument:
         """Open a document in Inventor.
