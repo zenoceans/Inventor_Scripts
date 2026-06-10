@@ -105,6 +105,10 @@ def diff_pdfs(
             append_images=diff_images[1:] if len(diff_images) > 1 else [],
             resolution=dpi,
         )
+        # Also emit per-page PNGs alongside the PDF so the anaglyph pages can be
+        # opened by image viewers/tools that cannot parse PIL's image-only PDF.
+        for page_index, image in enumerate(diff_images, start=1):
+            image.save(str(output_path.with_name(f"{output_path.stem}_p{page_index}.png")))
 
     return DiffResult(
         output_path=output_path,
