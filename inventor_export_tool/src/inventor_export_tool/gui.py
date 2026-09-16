@@ -107,6 +107,7 @@ class ExportToolGUI(ttk.Frame):
 
         self._step_var = tk.BooleanVar(value=True)
         self._dwg_var = tk.BooleanVar(value=True)
+        self._dxf_var = tk.BooleanVar(value=True)
         self._pdf_var = tk.BooleanVar(value=True)
         ttk.Checkbutton(opt_frame, text="STEP (.step)", variable=self._step_var).grid(
             row=0, column=0, sticky="w", padx=(0, 16)
@@ -114,8 +115,11 @@ class ExportToolGUI(ttk.Frame):
         ttk.Checkbutton(opt_frame, text="DWG (.dwg)", variable=self._dwg_var).grid(
             row=0, column=1, sticky="w", padx=(0, 16)
         )
+        ttk.Checkbutton(opt_frame, text="DXF (.dxf)", variable=self._dxf_var).grid(
+            row=0, column=2, sticky="w", padx=(0, 16)
+        )
         ttk.Checkbutton(opt_frame, text="PDF (.pdf)", variable=self._pdf_var).grid(
-            row=0, column=2, sticky="w"
+            row=0, column=3, sticky="w"
         )
 
         # --- Include options ---
@@ -260,6 +264,7 @@ class ExportToolGUI(ttk.Frame):
         self._output_var.set(c.output_folder)
         self._step_var.set(c.export_step)
         self._dwg_var.set(c.export_dwg)
+        self._dxf_var.set(c.export_dxf)
         self._pdf_var.set(c.export_pdf)
         self._parts_var.set(c.include_parts)
         self._subasm_var.set(c.include_subassemblies)
@@ -276,6 +281,7 @@ class ExportToolGUI(ttk.Frame):
         self._config.output_folder = self._output_var.get()
         self._config.export_step = self._step_var.get()
         self._config.export_dwg = self._dwg_var.get()
+        self._config.export_dxf = self._dxf_var.get()
         self._config.export_pdf = self._pdf_var.get()
         self._config.include_parts = self._parts_var.get()
         self._config.include_subassemblies = self._subasm_var.get()
@@ -297,6 +303,7 @@ class ExportToolGUI(ttk.Frame):
             output_folder=self._output_var.get(),
             export_step=self._step_var.get(),
             export_dwg=self._dwg_var.get(),
+            export_dxf=self._dxf_var.get(),
             export_pdf=self._pdf_var.get(),
             include_parts=self._parts_var.get(),
             include_subassemblies=self._subasm_var.get(),

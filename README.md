@@ -6,7 +6,7 @@ A multi-tab Windows desktop application for Autodesk Inventor 2026 automation. B
 
 | Tab | Description |
 |------------------------------------|------------------------------------|
-| **Inventor Export** | Batch-export STEP, DWG, and PDF from assemblies |
+| **Inventor Export** | Batch-export STEP, DWG, DXF, and PDF from assemblies |
 | **STEP Simplify** | Import STEP files, apply Inventor's Simplify feature, and save as `.ipt` |
 | **Drawing Creation** | Batch-create IDW drawings with projected views and revision stamps |
 
@@ -19,9 +19,10 @@ A multi-tab Windows desktop application for Autodesk Inventor 2026 automation. B
 -   Connects to a running Inventor process via the COM API — no macro installation required
 -   Recursively walks the full assembly tree and deduplicates components by file path
 -   Optionally skips suppressed occurrences and Content Center parts
--   Exports STEP (AP242), DWG, and PDF in a single pass
--   Auto-discovers co-located `.idw` drawing files for DWG/PDF export
+-   Exports STEP (AP242), DWG, DXF, and PDF in a single pass
+-   Auto-discovers co-located `.idw` drawing files for DWG/DXF/PDF export
 -   DWG export uses Inventor's native `SaveAs` (no translator INI required)
+-   DXF export uses the DWG/DXF translator add-in (Inventor has no native DXF `SaveAs`)
 -   PDF export suppresses translator warning dialogs (e.g. font substitution) automatically
 -   Composes output filenames as `<PartName>-<Revision>.<ext>` (e.g. `Bracket-B.step`)
 -   Detects and resolves filename collisions with `_2`, `_3` suffixes
@@ -92,7 +93,7 @@ Double-click `ZabraCadabra.exe`. See `usage_guide.txt` (bundled in the dist fold
 
 ### Inventor Export workflow
 
-1.  **Configure** — Choose an output folder, select which export formats to produce (STEP, DWG, PDF), and set component filters (parts, sub-assemblies, top-level assembly, suppressed).
+1.  **Configure** — Choose an output folder, select which export formats to produce (STEP, DWG, DXF, PDF), and set component filters (parts, sub-assemblies, top-level assembly, suppressed).
 2.  **Scan** — Click "Scan Assembly". The tool connects to Inventor, walks the active assembly tree, discovers all unique components and their co-located IDW drawings, and populates the preview table.
 3.  **Preview** — Review the table of planned output files. Each row shows the source component, the resolved output filename, and the export type.
 4.  **Export** — Click "Export". Files are written to the output folder. A progress bar advances per file, and each row is marked success or failure.
@@ -118,7 +119,7 @@ Double-click `ZabraCadabra.exe`. See `usage_guide.txt` (bundled in the dist fold
 
 ## Export Options {#export-options}
 
-Translator-specific options are configured in `config.json` under the `export_options` key. Each format (`step`, `pdf`) has its own set of options that map directly to Inventor's translator add-in settings. Omit a format key or leave it as `{}` to use Inventor's built-in defaults.
+Translator-specific options are configured in `config.json` under the `export_options` key. Each format (`step`, `pdf`, `dxf`) has its own set of options that map directly to Inventor's translator add-in settings. Omit a format key or leave it as `{}` to use Inventor's built-in defaults.
 
 > **Note:** DWG export uses Inventor's native `Document.SaveAs` rather than a translator add-in, so there are no configurable DWG translator options.
 
@@ -129,6 +130,7 @@ Translator-specific options are configured in `config.json` under the `export_op
   "output_folder": "C:\\exports",
   "export_step": true,
   "export_dwg": true,
+  "export_dxf": true,
   "export_pdf": true,
   "include_parts": true,
   "include_subassemblies": true,
@@ -178,6 +180,12 @@ DWG export converts IDW drawings to DWG using Inventor's native `Document.SaveAs
 
 There are no user-configurable options for DWG export — Inventor uses its built-in defaults.
 
+### DXF Export
+
+DXF export converts IDW drawings to DXF via Inventor's DWG/DXF translator add-in (`{C24E3AC4-122E-11D5-8E91-0010B541CD80}` — the same translator used for DWG; it writes DXF instead of DWG based on the output file's extension). Inventor has no native `SaveAs` support for DXF, so unlike DWG this goes through the translator add-in pipeline, the same pattern used for PDF.
+
+Translator options (e.g. `Export_Acad_IniFile`) can be set under `export_options.dxf` in `config.json`, the same as the other formats — there is no GUI settings tab for DXF options yet, so they must be edited directly in the config file.
+
 ### Notes
 
 -   Option keys are **case-sensitive** and must match exactly as shown above.
@@ -203,7 +211,7 @@ Inventor_Scripts/
 │   │   ├── document.py                # InventorDocument, AssemblyDocument, ComponentOccurrence
 │   │   ├── properties.py              # iProperty access
 │   │   ├── traversal.py               # walk_assembly — recursive tree walk
-│   │   ├── exporters.py               # export_step, export_dwg, export_pdf, export_drawing
+│   │   ├── exporters.py               # export_step, export_dwg, export_dxf, export_pdf, export_drawing
 │   │   ├── importer.py                # import_step — STEP file import
 │   │   ├── simplifier.py              # simplify_part, simplify_assembly, simplify_document
 │   │   ├── types.py                   # Enums, constants (DocumentType, Simplify enums)
@@ -434,6 +442,19 @@ def export_step(
 
 Export a part or assembly to STEP format (AP242 on Inventor 2026). The output directory is created if it does not exist. Pass `options` to override translator defaults (see [STEP Options](#step-options)).
 
+#### `export_dxf`
+
+``` python
+def export_dxf(
+    app: InventorApp,
+    drawing: InventorDocument,
+    output_path: str | Path,
+    options: dict[str, Any] | None = None,
+) -> None
+```
+
+Export a drawing document (`.idw`) to DXF format via the DWG/DXF translator add-in (the same translator used by `export_dwg` — it writes DXF instead of DWG based on the output file's extension). Inventor has no native `SaveAs` support for DXF. Pass `options` to override translator defaults (see [DXF Export](#dxf-export)).
+
 #### `export_pdf`
 
 ``` python
@@ -465,10 +486,10 @@ Open an `.idw` file, export it, then close it (only if it was not already open b
 |------------------------------------|------------------------------------|
 | `idw_path` | Path to the `.idw` source file. |
 | `output_path` | Full path for the output file. |
-| `fmt` | `"dwg"` or `"pdf"`. Raises `ValueError` for other values. |
-| `options` | Translator option overrides (PDF only — DWG uses native SaveAs). |
+| `fmt` | `"dwg"`, `"pdf"`, or `"dxf"`. Raises `ValueError` for other values. |
+| `options` | Translator option overrides (PDF and DXF only — DWG uses native SaveAs). |
 
-For DWG format, uses `Document.SaveAs` (Inventor's native DWG support) instead of the translator add-in. For PDF format, uses the translator add-in pipeline. IDW documents are opened invisibly to avoid Vault checkout dialogs.
+For DWG format, uses `Document.SaveAs` (Inventor's native DWG support) instead of the translator add-in. For PDF and DXF formats, uses the translator add-in pipeline (DXF shares DWG's translator add-in, distinguished by the output file's extension). IDW documents are opened invisibly to avoid Vault checkout dialogs.
 
 Raises `DocumentOpenError` if the IDW cannot be opened, `ExportError` if the export fails.
 
@@ -593,6 +614,8 @@ class TranslatorId(str, Enum):
     STL  = "{533E9A98-FC3B-11D4-8E7E-0010B541CD80}"
 ```
 
+`DWG` is also used for DXF export (`export_dxf`, `export_drawing(..., fmt="dxf")`) — it's a single translator add-in that writes either format based on the output file's extension, so there is no separate `DXF` member.
+
 #### `class PropertySet(str, Enum)`
 
 Standard Inventor iProperty set names.
@@ -703,7 +726,7 @@ class ComponentInfo:
 @dataclass
 class ExportItem:
     component: ComponentInfo
-    export_type: str            # "step" | "dwg" | "pdf"
+    export_type: str            # "step" | "dwg" | "pdf" | "dxf"
     output_filename: str
     output_path: str
 ```
@@ -743,6 +766,7 @@ class AppConfig:
     output_folder: str = ""
     export_step: bool = True
     export_dwg: bool = True
+    export_dxf: bool = True
     export_pdf: bool = True
     include_parts: bool = True
     include_subassemblies: bool = True

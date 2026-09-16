@@ -37,6 +37,7 @@ class AppConfig:
     output_folder: str = ""
     export_step: bool = True
     export_dwg: bool = True
+    export_dxf: bool = True
     export_pdf: bool = True
     include_parts: bool = True
     include_subassemblies: bool = True
@@ -82,6 +83,7 @@ def load_config(path: Path | None = None) -> AppConfig:
         "output_folder",
         "export_step",
         "export_dwg",
+        "export_dxf",
         "export_pdf",
         "include_parts",
         "include_subassemblies",

@@ -149,6 +149,27 @@ def export_dwg(
     _do_export(app, drawing, output_path, TranslatorId.DWG, option_overrides=options)
 
 
+def export_dxf(
+    app: InventorApp,
+    drawing: InventorDocument,
+    output_path: str | Path,
+    options: dict[str, Any] | None = None,
+) -> None:
+    """Export a drawing document (IDW) to DXF format.
+
+    Uses the same translator add-in as DWG export — Autodesk's DWG
+    translator writes DXF instead of DWG based on the output file's
+    extension. Inventor has no native ``SaveAs`` support for DXF.
+
+    Args:
+        app: Connected InventorApp instance.
+        drawing: The drawing document to export.
+        output_path: Full path for the output .dxf file.
+        options: Translator option overrides.
+    """
+    _do_export(app, drawing, output_path, TranslatorId.DWG, option_overrides=options)
+
+
 def export_pdf(
     app: InventorApp,
     drawing: InventorDocument,
@@ -184,19 +205,23 @@ def export_drawing(
 
     For PDF format, uses the translator add-in pipeline as before.
 
+    For DXF format, uses the translator add-in like PDF — Inventor has no
+    native ``SaveAs`` support for DXF, so it goes through the same DWG
+    translator add-in used by ``export_dxf``.
+
     Args:
         app: Connected InventorApp instance.
         idw_path: Path to the .idw file.
         output_path: Full path for the output file.
-        fmt: Export format — "dwg" or "pdf".
-        options: Translator option overrides (PDF only).
+        fmt: Export format — "dwg", "pdf", or "dxf".
+        options: Translator option overrides (PDF and DXF only).
 
     Raises:
         DocumentOpenError: If the IDW file can't be opened.
         ExportError: If the export fails.
-        ValueError: If fmt is not "dwg" or "pdf".
+        ValueError: If fmt is not "dwg", "pdf", or "dxf".
     """
-    if fmt not in ("dwg", "pdf"):
+    if fmt not in ("dwg", "pdf", "dxf"):
         raise ValueError(f"Unsupported drawing export format: {fmt!r}")
 
     output_path = str(output_path)
@@ -219,6 +244,10 @@ def export_drawing(
                 drawing.com_object.SaveAs(output_path, True)
             except Exception as e:
                 raise ExportError(path=idw_path, format="DWG", cause=e) from e
+        elif fmt == "dxf":
+            # DXF has no native SaveAs — use the translator add-in (same one as DWG,
+            # works fine on invisible docs, same as PDF below).
+            _do_export(app, drawing, output_path, TranslatorId.DWG, option_overrides=options)
         else:
             # PDF uses the translator add-in (works fine on invisible docs).
             _do_export(app, drawing, output_path, TranslatorId.PDF, option_overrides=options)

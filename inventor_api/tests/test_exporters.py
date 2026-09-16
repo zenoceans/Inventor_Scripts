@@ -16,6 +16,7 @@ from inventor_api.exporters import (
     _get_translator,
     _is_document_open,
     export_dwg,
+    export_dxf,
     export_pdf,
     export_step,
 )
@@ -92,6 +93,14 @@ class TestExportFunctions:
         doc = InventorDocument(make_mock_com_document())
 
         export_dwg(app, doc, tmp_path / "out.dwg")
+        com_app.ApplicationAddIns.ItemById.assert_called_with(TranslatorId.DWG.value)
+
+    def test_export_dxf_uses_dwg_translator(self, tmp_path):
+        com_app = make_mock_com_app()
+        app = InventorApp(com_app)
+        doc = InventorDocument(make_mock_com_document())
+
+        export_dxf(app, doc, tmp_path / "out.dxf")
         com_app.ApplicationAddIns.ItemById.assert_called_with(TranslatorId.DWG.value)
 
     def test_export_pdf_uses_pdf_translator(self, tmp_path):
@@ -199,6 +208,17 @@ class TestExportFunctionsPassOptions:
         opts = {"Export_Acad_IniFile": "C:\\settings.ini"}
 
         export_dwg(app, doc, tmp_path / "out.dwg", options=opts)
+
+        options = com_app.TransientObjects.CreateNameValueMap.return_value
+        options._oleobj_.Invoke.assert_called_once()
+
+    def test_export_dxf_passes_options(self, tmp_path):
+        com_app = make_mock_com_app()
+        app = InventorApp(com_app)
+        doc = InventorDocument(make_mock_com_document())
+        opts = {"Export_Acad_IniFile": "C:\\settings.ini"}
+
+        export_dxf(app, doc, tmp_path / "out.dxf", options=opts)
 
         options = com_app.TransientObjects.CreateNameValueMap.return_value
         options._oleobj_.Invoke.assert_called_once()

@@ -24,7 +24,7 @@ class ExportItem:
     """A single file to be exported."""
 
     component: ComponentInfo
-    export_type: str  # "step" | "dwg" | "pdf"
+    export_type: str  # "step" | "dwg" | "pdf" | "dxf"
     output_filename: str
     output_path: str
 

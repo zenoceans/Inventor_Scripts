@@ -116,6 +116,16 @@ def _build_export_items(
                         output_path=os.path.join(output_folder, filename),
                     )
                 )
+            if config.export_dxf:
+                filename = f"{base_name}.dxf"
+                items.append(
+                    ExportItem(
+                        component=comp,
+                        export_type="dxf",
+                        output_filename=filename,
+                        output_path=os.path.join(output_folder, filename),
+                    )
+                )
             if config.export_pdf:
                 filename = f"{base_name}.pdf"
                 items.append(
@@ -259,7 +269,7 @@ class ExportOrchestrator(BaseOrchestrator):
         )
         for item in items:
             idw_note = ""
-            if item.export_type in ("dwg", "pdf"):
+            if item.export_type in ("dwg", "pdf", "dxf"):
                 idw_note = " (from IDW)"
             self._emit(f"  {item.output_filename} [{item.export_type.upper()}]{idw_note}")
 
@@ -425,7 +435,7 @@ class ExportOrchestrator(BaseOrchestrator):
                 options=self._config.export_options.get("step"),
             )
 
-        elif item.export_type in ("dwg", "pdf"):
+        elif item.export_type in ("dwg", "pdf", "dxf"):
             if item.component.idw_path is None:
                 raise ExportError(
                     path=item.component.source_path,

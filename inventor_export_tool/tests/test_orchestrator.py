@@ -51,6 +51,7 @@ class TestBuildExportItems:
         return AppConfig(
             export_step=True,
             export_dwg=False,
+            export_dxf=False,
             export_pdf=False,
             naming_presets=[preset],
             active_preset_name="Test",
@@ -74,7 +75,7 @@ class TestBuildExportItems:
         # render_template returns fallback_filename when all tokens empty
         assert items[0].output_filename == "Bracket.step"
 
-    def test_dwg_and_pdf_use_same_base_name(self):
+    def test_dwg_pdf_and_dxf_use_same_base_name(self):
         idw = r"C:\Parts\Bracket.idw"
         comp = _make_component(idw_path=idw)
         doc = _make_doc(part_number="BRK-001", description="Bracket", revision="A")
@@ -82,6 +83,7 @@ class TestBuildExportItems:
         config = AppConfig(
             export_step=False,
             export_dwg=True,
+            export_dxf=True,
             export_pdf=True,
             naming_presets=[NamingPreset("T", "{Part Number}")],
             active_preset_name="T",
@@ -90,6 +92,7 @@ class TestBuildExportItems:
         names = [i.output_filename for i in items]
         assert "BRK-001.dwg" in names
         assert "BRK-001.pdf" in names
+        assert "BRK-001.dxf" in names
 
     def test_filters_parts_when_include_parts_false(self):
         comp = _make_component(document_type="part")
@@ -146,6 +149,7 @@ class TestExcludedFilenamePrefixes:
         config = AppConfig(
             export_step=True,
             export_dwg=False,
+            export_dxf=False,
             export_pdf=False,
             excluded_filename_prefixes=["DIN", "ISO"],
             naming_presets=[NamingPreset("T", "{Part Number}")],
@@ -210,6 +214,7 @@ def test_build_export_items_single_part_ignores_inclusion_filters():
         include_top_level=False,
         export_step=True,
         export_dwg=False,
+        export_dxf=False,
         export_pdf=False,
     )
 

@@ -11,6 +11,7 @@ class TestAppConfigDefaults:
         assert c.output_folder == ""
         assert c.export_step is True
         assert c.export_dwg is True
+        assert c.export_dxf is True
         assert c.export_pdf is True
         assert c.include_parts is True
         assert c.include_subassemblies is True
@@ -51,6 +52,7 @@ class TestLoadConfig:
         assert config.export_step is False
         # Other fields should be defaults
         assert config.export_dwg is True
+        assert config.export_dxf is True
 
     def test_ignores_unknown_fields(self, tmp_path):
         path = tmp_path / "config.json"
@@ -112,6 +114,7 @@ class TestExportOptions:
         c = AppConfig(export_options=opts)
         assert c.export_options.get("step") == {"ApplicationProtocolType": 3}
         assert c.export_options.get("dwg") is None
+        assert c.export_options.get("dxf") is None
 
 
 class TestExcludedFilenamePrefixes:

@@ -6,7 +6,7 @@ Six-package uv workspace for Autodesk Inventor 2026 automation tools:
 
 1. **`zabra_cadabra/`** — Multi-tab Tkinter shell app. Black-and-white themed. Entry point for the .exe.
 2. **`inventor_api/`** — Reusable Pythonic wrapper around Inventor COM API. Designed as a standalone library.
-3. **`inventor_export_tool/`** — Batch export (STEP/DWG/PDF). CLI: `inventor-export`.
+3. **`inventor_export_tool/`** — Batch export (STEP/DWG/DXF/PDF). CLI: `inventor-export`.
 4. **`inventor_simplify_tool/`** — Simplify/shrinkwrap tool. CLI: `inventor-simplify`.
 5. **`inventor_drawing_tool/`** — Batch drawing creation. CLI: `inventor-drawing`.
 6. **`inventor_utils/`** — Shared utilities (filenames, config, base logger, base orchestrator).

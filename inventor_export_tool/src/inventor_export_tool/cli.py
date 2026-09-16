@@ -22,7 +22,7 @@ def main() -> None:
         "--formats",
         default="step",
         metavar="FORMATS",
-        help="Comma-separated export formats: step, pdf, dwg (default: step)",
+        help="Comma-separated export formats: step, pdf, dwg, dxf (default: step)",
     )
     parser.add_argument(
         "--preset",
@@ -42,11 +42,12 @@ def main() -> None:
     args = parser.parse_args()
 
     formats = {f.strip().lower() for f in args.formats.split(",")}
-    valid = {"step", "pdf", "dwg"}
+    valid = {"step", "pdf", "dwg", "dxf"}
     unknown = formats - valid
     if unknown:
         print(
-            f"ERROR: Unknown format(s): {', '.join(sorted(unknown))}. Choose from: step, pdf, dwg"
+            f"ERROR: Unknown format(s): {', '.join(sorted(unknown))}. "
+            "Choose from: step, pdf, dwg, dxf"
         )
         sys.exit(1)
 
@@ -56,6 +57,7 @@ def main() -> None:
 
     config.export_step = "step" in formats
     config.export_dwg = "dwg" in formats
+    config.export_dxf = "dxf" in formats
     config.export_pdf = "pdf" in formats
 
     if args.preset is not None:

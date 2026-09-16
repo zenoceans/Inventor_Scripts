@@ -6,7 +6,7 @@ Zabra-Cadabra is a multi-tool desktop application for Autodesk Inventor 2026.
 It contains multiple tools organized as tabs in a single window.
 
 Current tools:
-  - Inventor Export: Batch-export STEP, DWG, PDF from assemblies
+  - Inventor Export: Batch-export STEP, DWG, DXF, PDF from assemblies
   - STEP Simplify:   Import STEP files, simplify, save as .ipt
 
 REQUIREMENTS
@@ -30,6 +30,8 @@ HOW TO USE
 4. Select which formats to export:
    - STEP (.step) -- 3D model file for other CAD programs
    - DWG (.dwg) -- 2D drawing file (requires matching .idw drawing files)
+   - DXF (.dxf) -- 2D drawing file for producers who prefer DXF over DWG
+     (requires matching .idw drawing files)
    - PDF (.pdf) -- printable drawing (requires matching .idw drawing files)
 5. Select which components to include:
    - Parts (IPT) -- individual parts
@@ -49,12 +51,14 @@ Click the "Settings..." button to configure advanced options for each format:
 
 Your settings are saved automatically and remembered next time you open the tool.
 
-DWG/PDF EXPORT NOTES
-- DWG and PDF export require an .idw drawing file with the same name as
-  the part or assembly, in the same folder.
+DWG/DXF/PDF EXPORT NOTES
+- DWG, DXF, and PDF export require an .idw drawing file with the same name
+  as the part or assembly, in the same folder.
   Example: If you have "Bracket.ipt", there must be a "Bracket.idw" nearby.
-- If no .idw file is found, that component is skipped for DWG/PDF export.
+- If no .idw file is found, that component is skipped for DWG/DXF/PDF export.
 - DWG export uses Inventor's native format conversion (not a translator).
+- DXF export uses Inventor's DWG/DXF translator (Inventor has no native
+  DXF conversion the way it does for DWG).
 - PDF font substitution warnings are suppressed automatically so they
   don't interrupt the batch flow.
 
