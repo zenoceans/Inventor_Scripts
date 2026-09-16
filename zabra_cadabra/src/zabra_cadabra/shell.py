@@ -14,8 +14,20 @@ if TYPE_CHECKING:
     from zabra_cadabra.telemetry.session import SessionContext
     from zabra_cadabra.telemetry.transport import NetworkTransport
 
-from zabra_cadabra.tab_registry import TABS
+from zabra_cadabra.shell_config import ShellConfig
+from zabra_cadabra.tab_registry import TABS, TabSpec
 from zabra_cadabra.theme import HEADER_BG, HEADER_FG, apply_bw_theme
+
+
+def filter_visible_tabs(
+    specs: list[TabSpec], hidden_tabs: list[str], show_prototypes: bool
+) -> list[TabSpec]:
+    """Return the subset of specs that should be shown as notebook tabs."""
+    return [
+        spec
+        for spec in specs
+        if not (spec.prototype and not show_prototypes) and spec.title not in hidden_tabs
+    ]
 
 
 class ZabraApp:
@@ -34,6 +46,7 @@ class ZabraApp:
         self._telemetry_config = telemetry_config
         self._log_file = log_file
         self._transport = transport
+        self._shell_config: ShellConfig = self._configs.get("shell") or ShellConfig()
         self._tabs: list[ttk.Frame] = []
 
         self._root = tk.Tk()
@@ -139,14 +152,27 @@ class ZabraApp:
             command=self._on_guide,
         ).pack(side="right", padx=(0, 8), pady=8)
 
+        # Options button (to the left of Guide)
+        tk.Button(
+            header,
+            text="Options",
+            bg=HEADER_BG,
+            fg=HEADER_FG,
+            font=("Segoe UI", 9),
+            bd=0,
+            activebackground=HEADER_BG,
+            activeforeground="#cccccc",
+            cursor="hand2",
+            command=self._on_options,
+        ).pack(side="right", padx=(0, 8), pady=8)
+
     def _build_notebook(self) -> None:
         self._notebook = ttk.Notebook(self._root)
         self._notebook.pack(fill="both", expand=True, padx=4, pady=(0, 4))
 
         show_prototypes = self._configs.get("show_prototype_tabs", False)
-        for spec in TABS:
-            if spec.prototype and not show_prototypes:
-                continue
+        visible = filter_visible_tabs(TABS, self._shell_config.hidden_tabs, show_prototypes)
+        for spec in visible:
             config = self._configs.get(spec.config_key) if spec.config_key else None
             tab = spec.factory(self._notebook, config)
             self._notebook.add(tab, text=spec.title)
@@ -170,6 +196,22 @@ class ZabraApp:
 
         guide_path = self._resolve_asset("usage_guide.txt")
         UsageGuideDialog(self._root, guide_path)
+
+    def _on_options(self) -> None:
+        from zabra_cadabra.options_dialog import OptionsDialog
+
+        OptionsDialog(
+            self._root,
+            all_titles=[t.title for t in TABS],
+            hidden=self._shell_config.hidden_tabs,
+            on_save=self._on_options_save,
+        )
+
+    def _on_options_save(self, hidden_tabs: list[str]) -> None:
+        from zabra_cadabra.shell_config import save_shell_config
+
+        self._shell_config.hidden_tabs = hidden_tabs
+        save_shell_config(self._shell_config)
 
     def _on_tab_changed(self, _event: object = None) -> None:
         try:
